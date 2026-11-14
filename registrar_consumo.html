@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h3 class="mb-1 text-primary-corona"><i class="bi bi-lightning-charge me-2 text-warning"></i>Registro de Consumos y Facturación Eléctrica</h3>
+    <p class="text-muted mb-0">
+      <strong>Molino La Corona:</strong> Auditoría de 130 motores | Facturación promedio <strong>~S/. 70,000 / mes</strong> | Monitoreo de pérdidas por energía reactiva
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('encargado.exportar_consumo') }}" class="btn btn-outline-success btn-sm shadow-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Descargar CSV
+    </a>
+    <a href="{{ url_for('encargado.graficos') }}" class="btn btn-outline-primary btn-sm shadow-sm">
+      <i class="bi bi-graph-up me-1"></i>Ver Gráficas
+    </a>
+    <a href="{{ url_for('encargado.dashboard') }}" class="btn btn-outline-secondary btn-sm shadow-sm">
+      <i class="bi bi-arrow-left me-1"></i>Panel
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Formulario de Registro -->
+  <div class="col-lg-5">
+    <div class="card card-custom shadow-sm border-0">
+      <div class="card-header card-header-custom bg-white d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-plus-circle me-1 text-primary"></i>Nueva Lectura / Recibo de Suministro Eléctrico</span>
+        <span class="badge bg-warning text-dark fw-bold">Módulo 1</span>
+      </div>
+      <div class="card-body p-4">
+        <!-- Tarjeta de Referencia de Facturación y Banco de Condensadores -->
+        <div class="p-3 bg-light rounded border mb-3 small">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-muted fw-semibold">Facturación de Referencia Molino:</span>
+            <span class="badge bg-warning text-dark fw-bold">~S/. 70,000 / mes</span>
+          </div>
+          <div class="text-muted mb-2">
+            Tarifa media industrial: <strong>S/. 0.422 / kWh</strong> (incluye recargo reactivo). Tarifa activa pura sin multas: <strong>~S/. 0.391 / kWh</strong>.
+          </div>
+          <div class="d-flex align-items-center gap-1 text-danger-emphasis fw-semibold">
+            <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
+            <span>Normativa OSINERGMIN / CNE: Penalización si Factor de Potencia (FP) &lt; 0.96.</span>
+          </div>
+        </div>
+
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- 1. Fecha de lectura -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Fecha de lectura / emisión del recibo:</label>
+            <input type="date" name="fecha" class="form-control" required id="inputFecha">
+          </div>
+
+          <!-- 2. Área / Línea -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Área / Línea del Molino:</label>
+            <select name="area" class="form-select">
+              <option value="general" selected>Planta General (Recibo Total Molino La Corona)</option>
+              <option value="blanqueo">Línea de Blanqueo y Pulido (Motores de 80 HP)</option>
+              <option value="descascarado">Línea de Descascarado y Separación Paddy</option>
+              <option value="secado">Línea de Secado y Silos de Almacenamiento</option>
+              <option value="prelimpieza">Tolvas, Recepción y Prelimpieza</option>
+              <option value="clasificacion">Clasificación por Tamaño, Sortex y Ensacado</option>
+            </select>
+            <div class="form-text small">Seleccione Planta General para recibos de la concesionaria o área para analizador de redes.</div>
+          </div>
+
+          <!-- 3. Consumo registrado en kWh -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Consumo registrado en kilowatts-hora (kWh):</label>
+            <div class="input-group">
+              <input type="number" step="0.1" name="kwh" id="inputKwh" class="form-control fw-bold" placeholder="Ej. 165000.0" required oninput="calcularValoresAutomaticos()">
+              <span class="input-group-text bg-primary text-white fw-semibold">kWh</span>
+            </div>
+            <div class="form-text small">Consumo mensual típico de planta: ~150,000 a 178,000 kWh.</div>
+          </div>
+
+          <!-- 4. Importe facturado total en soles -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Importe facturado total en soles (S/.):</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light fw-bold text-success">S/.</span>
+              <input type="number" step="0.01" name="monto_soles" id="inputSoles" class="form-control fw-bold text-success" placeholder="Ej. 70000.00" oninput="actualizarNeto()">
+            </div>
+            <div class="form-text small">Importe total emitido por la concesionaria en el recibo de suministro.</div>
+          </div>
+
+          <!-- 5. ✅ NUEVO CAMPO: Penalización por energía reactiva en S/ -->
+          <div class="mb-3 p-3 rounded border border-danger-subtle bg-danger-subtle bg-opacity-10">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label fw-bold text-danger mb-0">
+                <i class="bi bi-cash-coin me-1"></i>Penalización por energía reactiva en S/:
+              </label>
+              <span class="badge bg-danger">Nuevo Campo</span>
+            </div>
+            <div class="input-group mt-2">
+              <span class="input-group-text bg-white text-danger fw-bold">S/.</span>
+              <input type="number" step="0.01" name="penalizacion_reactiva" id="inputPenalizacion" class="form-control fw-bold text-danger" placeholder="0.00 (o ej. 5200.00)" value="0.00" oninput="actualizarNeto()">
+            </div>
+            <div class="form-text small text-muted mt-1">
+              Monto cobrado por bajo factor de potencia. <strong>Al instalar el banco de condensadores, este importe pasa a 0 S/.</strong>
+            </div>
+            <div id="boxNeto" class="mt-2 small fw-semibold text-primary d-none">
+              <i class="bi bi-info-circle me-1"></i>Facturación de energía activa neta: <span id="txtNetoSoles" class="fw-bold">S/. 0.00</span>
+            </div>
+          </div>
+
+          <!-- 6. ✅ NUEVO CAMPO: Factor de potencia registrado -->
+          <div class="mb-3 p-3 rounded border border-warning-subtle bg-warning-subtle bg-opacity-10">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label fw-bold text-warning-emphasis mb-0">
+                <i class="bi bi-speedometer2 me-1"></i>Factor de potencia registrado:
+              </label>
+              <span class="badge bg-warning text-dark">Nuevo Campo</span>
+            </div>
+            <div class="input-group mt-2">
+              <span class="input-group-text bg-white fw-bold">cos &phi;</span>
+              <input type="number" step="0.01" min="0.50" max="1.00" name="factor_potencia" id="inputFp" class="form-control fw-bold" placeholder="Ej. 0.83" value="0.83" oninput="evaluarFp()">
+              <span id="badgeEstadoFp" class="input-group-text bg-danger text-white fw-semibold small">Bajo (&lt; 0.96)</span>
+            </div>
+            <div class="form-text small text-muted mt-1">
+              Normativa OSINERGMIN / CNE: <strong>Meta &ge; 0.96</strong>. Valores menores incurren en penalización mensual.
+            </div>
+          </div>
+
+          <!-- 7. Fuente de medición -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Fuente de medición:</label>
+            <select name="fuente" class="form-select">
+              <option value="recibo" selected>Recibo mensual de suministro eléctrico (Concesionaria)</option>
+              <option value="medicion">Medición de campo con analizador de redes portátil</option>
+            </select>
+          </div>
+
+          <!-- 8. Observaciones -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Observaciones:</label>
+            <textarea name="observaciones" class="form-control" rows="2" placeholder="Notas técnicas, estado de condensadores, N° de recibo, analizador de redes, etc."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary-corona w-100 py-2 fw-semibold shadow-sm fs-6">
+            <i class="bi bi-save me-1"></i>Guardar Lectura de Consumo & Facturación
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Últimos Registros -->
+  <div class="col-lg-7">
+    <div class="card card-custom shadow-sm border-0 h-100">
+      <div class="card-header card-header-custom bg-white d-flex justify-content-between align-items-center">
+        <div>
+          <i class="bi bi-clock-history me-1 text-primary"></i>
+          <strong>Lecturas, Facturación y Penalizaciones Registradas</strong>
+        </div>
+        <span class="badge bg-secondary">{{ ultimos | length }} registros</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-custom mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Fecha</th>
+                <th>Área Molino</th>
+                <th>Consumo (kWh)</th>
+                <th>Facturación Total</th>
+                <th>Penalización Reactiva</th>
+                <th>Factor Potencia</th>
+                <th>Fuente / Notas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in ultimos %}
+              <tr>
+                <td class="text-nowrap small">
+                  <i class="bi bi-calendar3 me-1 text-muted"></i>{{ r.fecha }}
+                </td>
+                <td>
+                  <span class="badge badge-area-{{ r.area }}">
+                    {{ r.area | capitalize }}
+                  </span>
+                </td>
+                <td class="fw-bold text-primary text-nowrap">
+                  {{ '{:,.1f}'.format(r.kwh) }} <small class="text-muted">kWh</small>
+                </td>
+                <td class="fw-bold text-success text-nowrap">
+                  S/. {{ '{:,.2f}'.format(r.monto_soles or (r.kwh * 0.422)) }}
+                </td>
+                <td class="text-nowrap">
+                  {% if r.penalizacion_reactiva and r.penalizacion_reactiva > 0 %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>S/. {{ '{:,.2f}'.format(r.penalizacion_reactiva) }}
+                  </span>
+                  {% else %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    <i class="bi bi-check-circle me-1"></i>S/. 0.00 (Meta)
+                  </span>
+                  {% endif %}
+                </td>
+                <td class="text-nowrap text-center">
+                  {% if r.factor_potencia %}
+                  <span class="badge {{ r.badge_factor_potencia() }} fw-bold" title="Norma: &ge; 0.96">
+                    cos &phi; {{ '{:.2f}'.format(r.factor_potencia) }}
+                  </span>
+                  {% else %}
+                  <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
+                <td class="small">
+                  <div class="d-flex align-items-center text-muted">
+                    <i class="bi {{ 'bi-receipt' if r.fuente == 'recibo' else 'bi-speedometer' }} me-1 text-primary"></i>
+                    <span>{{ 'Recibo' if r.fuente == 'recibo' else 'Medición' }}</span>
+                  </div>
+                  {% if r.observaciones %}
+                  <div class="text-truncate text-muted small" style="max-width: 130px;" title="{{ r.observaciones }}">
+                    {{ r.observaciones }}
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" class="text-center py-5 text-muted">
+                  <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                  No se registran consumos energéticos aún.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-footer bg-light small text-muted d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-info-circle me-1"></i>El banco de condensadores elimina al 100% las penalizaciones por energía reactiva.</span>
+        <a href="{{ url_for('encargado.graficos') }}" class="text-decoration-none fw-semibold">Ver gráfico exclusivo de reactiva &rarr;</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Inicializar fecha de hoy si está vacío
+  document.addEventListener("DOMContentLoaded", function() {
+    const inputFecha = document.getElementById("inputFecha");
+    if (!inputFecha.value) {
+      inputFecha.value = new Date().toISOString().split("T")[0];
+    }
+    evaluarFp();
+    actualizarNeto();
+  });
+
+  function calcularValoresAutomaticos() {
+    const kwh = parseFloat(document.getElementById('inputKwh').value);
+    const solesInput = document.getElementById('inputSoles');
+    if (!isNaN(kwh) && kwh > 0 && (!solesInput.value || solesInput.dataset.auto === "true")) {
+      solesInput.value = (kwh * 0.422).toFixed(2);
+      solesInput.dataset.auto = "true";
+    }
+    actualizarNeto();
+  }
+
+  document.getElementById('inputSoles').addEventListener('input', function() {
+    this.dataset.auto = "false";
+    actualizarNeto();
+  });
+
+  function actualizarNeto() {
+    const total = parseFloat(document.getElementById('inputSoles').value) || 0;
+    const penal = parseFloat(document.getElementById('inputPenalizacion').value) || 0;
+    const boxNeto = document.getElementById('boxNeto');
+    const txtNeto = document.getElementById('txtNetoSoles');
+
+    if (total > 0 && penal > 0) {
+      const neto = Math.max(0, total - penal);
+      txtNeto.innerText = 'S/. ' + neto.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      boxNeto.classList.remove('d-none');
+    } else {
+      boxNeto.classList.add('d-none');
+    }
+  }
+
+  function evaluarFp() {
+    const fpVal = parseFloat(document.getElementById('inputFp').value);
+    const badge = document.getElementById('badgeEstadoFp');
+    if (isNaN(fpVal)) {
+      badge.className = 'input-group-text bg-secondary text-white fw-semibold small';
+      badge.innerText = 'Sin dato';
+    } else if (fpVal >= 0.96) {
+      badge.className = 'input-group-text bg-success text-white fw-semibold small';
+      badge.innerText = 'Óptimo (≥ 0.96)';
+    } else if (fpVal >= 0.90) {
+      badge.className = 'input-group-text bg-warning text-dark fw-semibold small';
+      badge.innerText = 'Regular (< 0.96)';
+    } else {
+      badge.className = 'input-group-text bg-danger text-white fw-semibold small';
+      badge.innerText = 'Crítico (< 0.90)';
+    }
+  }
+</script>
+{% endblock %}

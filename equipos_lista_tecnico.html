@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h3 class="mb-1 text-primary-corona"><i class="bi bi-tools me-2 text-primary"></i>Fichas Técnicas de Motores en Planta</h3>
+    <p class="text-muted mb-0">
+      <strong>Molino La Corona:</strong> Guía de campo de 130 motores (hasta 80 HP) y semáforo de urgencia de mantenimiento
+    </p>
+  </div>
+  <a href="{{ url_for('tecnico.registrar') }}" class="btn btn-accent-corona btn-sm fw-semibold shadow-sm">
+    <i class="bi bi-plus-circle me-1"></i>Registrar Mantenimiento
+  </a>
+</div>
+
+<!-- Barra de Control: Filtros del Semáforo de 3 Colores y Búsqueda -->
+<div class="card card-custom mb-4 p-3 shadow-sm">
+  <div class="row g-3 align-items-center">
+    <!-- Botones de Semáforo -->
+    <div class="col-lg-6">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="small fw-bold text-muted me-1"><i class="bi bi-funnel me-1"></i>Semáforo:</span>
+        <a href="{{ url_for('tecnico.ver_equipos', area=filtro_area, q=busqueda) }}" 
+           class="btn btn-sm {{ 'btn-dark' if not filtro_urgencia else 'btn-outline-dark' }}">
+          Todos ({{ conteo_total }})
+        </a>
+        <a href="{{ url_for('tecnico.ver_equipos', urgencia='alta', area=filtro_area, q=busqueda) }}" 
+           class="btn btn-sm {{ 'btn-danger text-white' if filtro_urgencia == 'alta' else 'btn-outline-danger' }}">
+          <span class="dot-semaforo dot-alta me-1"></span>🔴 Alta ({{ conteo_alta }})
+        </a>
+        <a href="{{ url_for('tecnico.ver_equipos', urgencia='media', area=filtro_area, q=busqueda) }}" 
+           class="btn btn-sm {{ 'btn-warning text-dark fw-bold' if filtro_urgencia == 'media' else 'btn-outline-warning text-dark' }}">
+          <span class="dot-semaforo dot-media me-1"></span>🟡 Media ({{ conteo_media }})
+        </a>
+        <a href="{{ url_for('tecnico.ver_equipos', urgencia='baja', area=filtro_area, q=busqueda) }}" 
+           class="btn btn-sm {{ 'btn-success text-white' if filtro_urgencia == 'baja' else 'btn-outline-success' }}">
+          <span class="dot-semaforo dot-baja me-1"></span>🟢 Baja ({{ conteo_baja }})
+        </a>
+      </div>
+    </div>
+
+    <!-- Filtro por Área del Molino y Búsqueda -->
+    <div class="col-lg-6">
+      <form method="GET" class="row g-2">
+        {% if filtro_urgencia %}
+        <input type="hidden" name="urgencia" value="{{ filtro_urgencia }}">
+        {% endif %}
+        <div class="col-sm-5">
+          <select name="area" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="" {{ 'selected' if not filtro_area }}>-- Todas las Áreas --</option>
+            <option value="blanqueo" {{ 'selected' if filtro_area == 'blanqueo' }}>Blanqueo y Pulido (80 HP)</option>
+            <option value="descascarado" {{ 'selected' if filtro_area == 'descascarado' }}>Descascarado & Paddy</option>
+            <option value="secado" {{ 'selected' if filtro_area == 'secado' }}>Secado & Silos</option>
+            <option value="prelimpieza" {{ 'selected' if filtro_area == 'prelimpieza' }}>Tolvas & Prelimpieza</option>
+            <option value="clasificacion" {{ 'selected' if filtro_area == 'clasificacion' }}>Clasificación & Ensacado</option>
+          </select>
+        </div>
+        <div class="col-sm-7">
+          <div class="input-group input-group-sm">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por código, nombre o HP..." value="{{ busqueda or '' }}">
+            <button class="btn btn-primary-corona" type="submit"><i class="bi bi-search"></i></button>
+            {% if busqueda or filtro_area or filtro_urgencia %}
+            <a href="{{ url_for('tecnico.ver_equipos') }}" class="btn btn-outline-secondary" title="Limpiar filtros"><i class="bi bi-x-circle"></i></a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card card-custom">
+  <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-check me-1"></i>Inventario de Motores — Modo Consulta Técnico</span>
+    <span class="badge bg-secondary">{{ equipos | length }} motores disponibles</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-custom mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Motor / Equipo</th>
+            <th>Área Molino</th>
+            <th>Marca y Modelo</th>
+            <th>Potencia Nominal</th>
+            <th>Frecuencia</th>
+            <th>Próximo Mantenimiento</th>
+            <th>Semáforo Urgencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in equipos %}
+          {% set urg = e.nivel_urgencia() %}
+          {% set dias = e.dias_restantes() %}
+          <tr>
+            <td><strong class="font-monospace text-dark">{{ e.codigo or ('M-' ~ e.id) }}</strong></td>
+            <td class="fw-semibold">
+              {{ e.nombre }}
+              {% if e.potencia_hp and e.potencia_hp >= 80 %}
+              <span class="badge bg-dark ms-1">80 HP</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge badge-area-{{ e.area }}">
+                {{ e.area | capitalize }}
+              </span>
+            </td>
+            <td><small class="text-muted">{{ e.marca or '—' }} {{ e.modelo or '' }}</small></td>
+            <td>
+              <span class="badge {{ 'badge-hp-80' if e.potencia_hp == 80 else ('badge-hp-grande' if e.potencia_hp and e.potencia_hp >= 50 else 'badge-hp-mediano') }}">
+                {{ e.potencia_display() }}
+              </span>
+            </td>
+            <td>Cada {{ e.frecuencia_mantenimiento_dias }} días</td>
+            <td>
+              {% if dias <= 0 %}
+              <span class="text-danger fw-bold"><i class="bi bi-clock-history me-1"></i>Vencido hace {{ dias | abs }} d</span>
+              {% elif dias <= 15 %}
+              <span class="text-warning-emphasis fw-bold"><i class="bi bi-hourglass-split me-1"></i>Faltan {{ dias }} d</span>
+              {% else %}
+              <span class="text-success fw-semibold"><i class="bi bi-shield-check me-1"></i>Faltan {{ dias }} d</span>
+              {% endif %}
+            </td>
+            <td>
+              <!-- SEMÁFORO DE 3 COLORES -->
+              <span class="badge-urgencia-{{ urg }}">
+                <span class="dot-semaforo dot-{{ urg }}"></span>
+                {{ e.etiqueta_urgencia() }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<p class="text-muted small mt-3">
+  <i class="bi bi-info-circle me-1"></i>
+  <strong>Control de Privilegios (Específico 3):</strong> Las fichas técnicas son de consulta para los técnicos. Solo el encargado puede editar potencias, marcas o frecuencias.
+</p>
+{% endblock %}

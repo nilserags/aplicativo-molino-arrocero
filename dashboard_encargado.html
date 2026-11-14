@@ -1,0 +1,822 @@
+{% extends "base.html" %}
+{% block contenido %}
+
+<!-- ENCABEZADO Y ACCIONES RÁPIDAS DEL DASHBOARD -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <h3 class="mb-0 fw-bold text-light dashboard-title">
+        <i class="bi bi-speedometer2 text-cyan me-2"></i>Panel de Control — Sala de Cómputo
+      </h3>
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
+        <span class="pulse-indicator-emerald"></span> En Línea
+      </span>
+    </div>
+    <p class="text-muted small mb-0 mt-1">
+      <strong>Molino La Corona:</strong> Supervisión de 130 motores (hasta 80 HP) & Auditoría Energética (~S/. 70,000/mes)
+    </p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('encargado.simulador_enpi') }}" class="btn btn-sm btn-gradient-warning fw-semibold shadow-sm">
+      <i class="bi bi-calculator me-1"></i>Simulador EnPI
+    </a>
+    <a href="{{ url_for('encargado.registrar_consumo') }}" class="btn btn-sm btn-gradient-cyan fw-semibold shadow-sm">
+      <i class="bi bi-lightning-charge me-1"></i>Registrar Consumo
+    </a>
+    <a href="{{ url_for('encargado.exportar_mantenimientos') }}" class="btn btn-sm btn-outline-success shadow-sm" title="Descargar reporte en CSV para Excel">
+      <i class="bi bi-file-earmark-excel me-1"></i>Exportar OTs (CSV)
+    </a>
+    <a href="{{ url_for('encargado.exportar_consumo') }}" class="btn btn-sm btn-outline-info shadow-sm" title="Descargar consumos en CSV">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar Consumos (CSV)
+    </a>
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- FILA 1: GRÁFICAS PRINCIPALES (ESTILO ROCKER DASHBOARD)                   -->
+<!-- Card 1: Balance Energético y Facturación (Sales Overview)                -->
+<!-- Card 2: Órdenes de Trabajo por Mes (Order Status)                        -->
+<!-- ======================================================================== -->
+<div class="row g-4 mb-4">
+  <!-- Gráfica 1: Balance Energético & Facturación (Sales Overview) -->
+  <div class="col-xl-8 col-lg-7">
+    <div class="card admin-card h-100 shadow-sm border-0">
+      <div class="card-header admin-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 border-0 bg-transparent py-3">
+        <div>
+          <h5 class="mb-0 fw-bold text-light">
+            <i class="bi bi-activity text-cyan me-2"></i>Balance Energético & Facturación Mensual
+          </h5>
+          <small class="text-muted">Consumo auditado (kWh) vs. Facturación en Soles (S/.) en Molino La Corona</small>
+        </div>
+        <!-- Leyendas estilo Rocker Dashboard -->
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center gap-1 small text-muted">
+            <span class="legend-indicator bg-warning"></span>
+            <span class="text-light fw-semibold">Consumo (kWh)</span>
+          </div>
+          <div class="d-flex align-items-center gap-1 small text-muted">
+            <span class="legend-indicator bg-cyan"></span>
+            <span class="text-light fw-semibold">Facturación (S/.)</span>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-dark text-muted border-0 p-1" data-bs-toggle="dropdown">
+              <i class="bi bi-three-dots"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end admin-dropdown-menu">
+              <li><a class="dropdown-item admin-dropdown-item small" href="{{ url_for('encargado.graficos') }}"><i class="bi bi-arrows-fullscreen me-2"></i>Ver Gráfica Detallada</a></li>
+              <li><a class="dropdown-item admin-dropdown-item small" href="{{ url_for('encargado.registrar_consumo') }}"><i class="bi bi-plus-circle me-2"></i>Ingresar Nueva Lectura</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-3 pt-0">
+        <div style="position: relative; height: 320px; width: 100%;">
+          <canvas id="graficoBalanceEnergetico"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfica 2: Órdenes de Trabajo por Mes (Order Status con barras cápsula degradadas) -->
+  <div class="col-xl-4 col-lg-5">
+    <div class="card admin-card h-100 shadow-sm border-0">
+      <div class="card-header admin-card-header d-flex justify-content-between align-items-center border-0 bg-transparent py-3">
+        <div>
+          <h5 class="mb-0 fw-bold text-light">
+            <i class="bi bi-bar-chart-fill text-pink me-2"></i>Estado de Mantenimiento
+          </h5>
+          <small class="text-muted">Órdenes de Trabajo FMT-MTO-01 mensuales</small>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-sm btn-dark text-muted border-0 p-1" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end admin-dropdown-menu">
+            <li><a class="dropdown-item admin-dropdown-item small" href="#tabla-mantenimientos"><i class="bi bi-table me-2"></i>Ver Tabla Completa</a></li>
+            <li><a class="dropdown-item admin-dropdown-item small" href="{{ url_for('encargado.exportar_mantenimientos') }}"><i class="bi bi-download me-2"></i>Descargar CSV</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-body p-3 pt-0">
+        <div style="position: relative; height: 320px; width: 100%;">
+          <canvas id="graficoMantenimientoBarras"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- FILA 2: DONUT CHART + 6 MINI STAT CARDS (ESTILO ROCKER DASHBOARD)        -->
+<!-- Donut Chart: Semáforo de 3 Colores del Parque                            -->
+<!-- Grid 2x3: 6 Mini Tarjetas con Valores, Iconos y Minibarras Sparkline      -->
+<!-- ======================================================================== -->
+<div class="row g-4 mb-4">
+  <!-- Gráfica Donut (Semáforo de 3 Colores con texto central) -->
+  <div class="col-xl-5 col-lg-5">
+    <div class="card admin-card h-100 shadow-sm border-0">
+      <div class="card-header admin-card-header border-0 bg-transparent py-3">
+        <h5 class="mb-0 fw-bold text-light">
+          <i class="bi bi-pie-chart-fill text-success me-2"></i>Semáforo del Parque (130 Motores)
+        </h5>
+        <small class="text-muted">Distribución porcentual según urgencia de intervención</small>
+      </div>
+      <div class="card-body p-3 pt-0 d-flex flex-column justify-content-between">
+        <div class="donut-chart-container" style="position: relative; height: 230px; width: 100%;">
+          <canvas id="graficoSemaforoDonut"></canvas>
+          <!-- Texto central del Donut -->
+          <div class="donut-center-badge">
+            <span class="donut-center-number text-light">{{ kpis.total_equipos }}</span>
+            <span class="donut-center-label text-muted">Motores</span>
+          </div>
+        </div>
+
+        <!-- Leyendas / Filtros debajo del Donut -->
+        <div class="row g-2 mt-3 pt-2 border-top border-dark-subtle text-center">
+          <div class="col-4">
+            <a href="{{ url_for('encargado.listar_equipos', urgencia='baja') }}" class="text-decoration-none">
+              <div class="p-2 rounded bg-success-subtle border border-success-subtle h-100">
+                <span class="d-block small text-success fw-bold">🟢 Al Día</span>
+                <span class="fs-5 fw-bold text-light">{{ kpis.motores_baja }}</span>
+                <small class="d-block text-muted">{{ "%.0f"|format(kpis.motores_baja * 100 / kpis.total_equipos) }}%</small>
+              </div>
+            </a>
+          </div>
+          <div class="col-4">
+            <a href="{{ url_for('encargado.listar_equipos', urgencia='media') }}" class="text-decoration-none">
+              <div class="p-2 rounded bg-warning-subtle border border-warning-subtle h-100">
+                <span class="d-block small text-warning fw-bold">🟡 Próximo</span>
+                <span class="fs-5 fw-bold text-light">{{ kpis.motores_media }}</span>
+                <small class="d-block text-muted">{{ "%.0f"|format(kpis.motores_media * 100 / kpis.total_equipos) }}%</small>
+              </div>
+            </a>
+          </div>
+          <div class="col-4">
+            <a href="{{ url_for('encargado.listar_equipos', urgencia='alta') }}" class="text-decoration-none">
+              <div class="p-2 rounded bg-danger-subtle border border-danger-subtle h-100">
+                <span class="d-block small text-danger fw-bold">🔴 Crítico</span>
+                <span class="fs-5 fw-bold text-light">{{ kpis.motores_alta }}</span>
+                <small class="d-block text-muted">{{ "%.0f"|format(kpis.motores_alta * 100 / kpis.total_equipos) }}%</small>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejilla de 6 Mini Tarjetas Métricas con Sparklines (Exacto como en la imagen) -->
+  <div class="col-xl-7 col-lg-7">
+    <div class="row g-3">
+      <!-- Mini Tarjeta 1: Total Motores -->
+      <div class="col-sm-6">
+        <div class="card admin-mini-card p-3 shadow-sm border-0 h-100">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div>
+              <div class="mini-card-title text-muted">PARQUE DE MOTORES</div>
+              <div class="mini-card-value text-light fw-bold">{{ kpis.total_equipos }}</div>
+            </div>
+            <div class="mini-card-icon-box bg-primary-subtle text-cyan">
+              <i class="bi bi-cpu-fill"></i>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted text-truncate">Hasta <strong>80 HP</strong> en 5 áreas</small>
+            <span class="badge bg-cyan-subtle text-cyan small fw-semibold">+100% Cat.</span>
+          </div>
+          <!-- Mini barras sparkline -->
+          <div class="sparkline-bar-row mt-2">
+            <span class="spark-bar" style="height: 45%;"></span>
+            <span class="spark-bar" style="height: 60%;"></span>
+            <span class="spark-bar" style="height: 75%;"></span>
+            <span class="spark-bar" style="height: 50%;"></span>
+            <span class="spark-bar" style="height: 90%;"></span>
+            <span class="spark-bar" style="height: 70%;"></span>
+            <span class="spark-bar" style="height: 100%;"></span>
+            <span class="spark-bar" style="height: 85%;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini Tarjeta 2: Facturación Mensual Ref. -->
+      <div class="col-sm-6">
+        <div class="card admin-mini-card p-3 shadow-sm border-0 h-100">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div>
+              <div class="mini-card-title text-muted">FACTURACIÓN MENSUAL</div>
+              <div class="mini-card-value text-light fw-bold">S/. 70,000</div>
+            </div>
+            <div class="mini-card-icon-box bg-danger-subtle text-danger">
+              <i class="bi bi-currency-dollar"></i>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted text-truncate">Tarifa prom. S/. 0.422 / kWh</small>
+            <span class="badge bg-danger-subtle text-danger small fw-semibold">165k kWh</span>
+          </div>
+          <div class="sparkline-bar-row mt-2">
+            <span class="spark-bar bar-danger" style="height: 70%;"></span>
+            <span class="spark-bar bar-danger" style="height: 85%;"></span>
+            <span class="spark-bar bar-danger" style="height: 65%;"></span>
+            <span class="spark-bar bar-danger" style="height: 90%;"></span>
+            <span class="spark-bar bar-danger" style="height: 80%;"></span>
+            <span class="spark-bar bar-danger" style="height: 95%;"></span>
+            <span class="spark-bar bar-danger" style="height: 75%;"></span>
+            <span class="spark-bar bar-danger" style="height: 88%;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini Tarjeta 3: Penalización Reactiva -->
+      <div class="col-sm-6">
+        <div class="card admin-mini-card p-3 shadow-sm border-0 h-100">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div>
+              <div class="mini-card-title text-muted">PENALIZACIÓN REACTIVA</div>
+              <div class="mini-card-value text-light fw-bold">S/. {{ '{:,.0f}'.format(kpis.penalizacion_promedio_mensual) }}</div>
+            </div>
+            <div class="mini-card-icon-box bg-warning-subtle text-warning">
+              <i class="bi bi-lightning-charge-fill"></i>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted text-truncate">FP actual: <strong>{{ kpis.factor_potencia_promedio }}</strong> (Meta &ge; 0.96)</small>
+            <span class="badge bg-warning-subtle text-warning small fw-semibold">Gasto Evitable</span>
+          </div>
+          <div class="sparkline-bar-row mt-2">
+            <span class="spark-bar bar-warning" style="height: 80%;"></span>
+            <span class="spark-bar bar-warning" style="height: 60%;"></span>
+            <span class="spark-bar bar-warning" style="height: 75%;"></span>
+            <span class="spark-bar bar-warning" style="height: 90%;"></span>
+            <span class="spark-bar bar-warning" style="height: 65%;"></span>
+            <span class="spark-bar bar-warning" style="height: 70%;"></span>
+            <span class="spark-bar bar-warning" style="height: 85%;"></span>
+            <span class="spark-bar bar-warning" style="height: 60%;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini Tarjeta 4: Ahorro Anual Proyectado -->
+      <div class="col-sm-6">
+        <div class="card admin-mini-card p-3 shadow-sm border-0 h-100">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div>
+              <div class="mini-card-title text-muted">AHORRO ANUAL PROY.</div>
+              <div class="mini-card-value text-emerald fw-bold">S/. {{ '{:,.0f}'.format(kpis.ahorro_anual_proyectado) }}</div>
+            </div>
+            <div class="mini-card-icon-box bg-success-subtle text-emerald">
+              <i class="bi bi-piggy-bank-fill"></i>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted text-truncate">Con Banco de Condensadores</small>
+            <span class="badge bg-success-subtle text-emerald small fw-semibold">+100% Recup.</span>
+          </div>
+          <div class="sparkline-bar-row mt-2">
+            <span class="spark-bar bar-emerald" style="height: 50%;"></span>
+            <span class="spark-bar bar-emerald" style="height: 65%;"></span>
+            <span class="spark-bar bar-emerald" style="height: 75%;"></span>
+            <span class="spark-bar bar-emerald" style="height: 85%;"></span>
+            <span class="spark-bar bar-emerald" style="height: 90%;"></span>
+            <span class="spark-bar bar-emerald" style="height: 95%;"></span>
+            <span class="spark-bar bar-emerald" style="height: 100%;"></span>
+            <span class="spark-bar bar-emerald" style="height: 100%;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini Tarjeta 5: Órdenes de Mantenimiento Totales -->
+      <div class="col-sm-6">
+        <div class="card admin-mini-card p-3 shadow-sm border-0 h-100">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div>
+              <div class="mini-card-title text-muted">ÓRDENES DE TRABAJO</div>
+              <div class="mini-card-value text-light fw-bold">{{ kpis.total_mantenimientos }}</div>
+            </div>
+            <div class="mini-card-icon-box bg-info-subtle text-info">
+              <i class="bi bi-wrench-adjustable-circle-fill"></i>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted text-truncate">FMT-MTO-01 Versión 02</small>
+            <span class="badge bg-info-subtle text-info small fw-semibold">Historial</span>
+          </div>
+          <div class="sparkline-bar-row mt-2">
+            <span class="spark-bar bar-info" style="height: 40%;"></span>
+            <span class="spark-bar bar-info" style="height: 55%;"></span>
+            <span class="spark-bar bar-info" style="height: 70%;"></span>
+            <span class="spark-bar bar-info" style="height: 60%;"></span>
+            <span class="spark-bar bar-info" style="height: 80%;"></span>
+            <span class="spark-bar bar-info" style="height: 65%;"></span>
+            <span class="spark-bar bar-info" style="height: 90%;"></span>
+            <span class="spark-bar bar-info" style="height: 75%;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini Tarjeta 6: Pendientes de Validación -->
+      <div class="col-sm-6">
+        <div class="card admin-mini-card p-3 shadow-sm border-0 h-100">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div>
+              <div class="mini-card-title text-muted">PENDIENTES VALIDACIÓN</div>
+              <div class="mini-card-value {{ 'text-danger' if kpis.pendientes_validacion > 0 else 'text-success' }} fw-bold">
+                {{ kpis.pendientes_validacion }}
+              </div>
+            </div>
+            <div class="mini-card-icon-box {{ 'bg-danger-subtle text-danger' if kpis.pendientes_validacion > 0 else 'bg-success-subtle text-success' }}">
+              <i class="bi bi-shield-check"></i>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted text-truncate">Requieren firma de encargado</small>
+            <span class="badge {{ 'bg-danger-subtle text-danger' if kpis.pendientes_validacion > 0 else 'bg-success-subtle text-success' }} small fw-semibold">
+              {{ 'Revisar' if kpis.pendientes_validacion > 0 else 'Al Día' }}
+            </span>
+          </div>
+          <div class="sparkline-bar-row mt-2">
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 30%;"></span>
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 50%;"></span>
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 40%;"></span>
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 60%;"></span>
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 45%;"></span>
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 55%;"></span>
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 70%;"></span>
+            <span class="spark-bar {{ 'bar-danger' if kpis.pendientes_validacion > 0 else 'bar-emerald' }}" style="height: 80%;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- FILA 3: TARJETAS DETALLADAS DEL SEMÁFORO DE URGENCIA                     -->
+<!-- ======================================================================== -->
+<div class="card admin-card mb-4 border-0 shadow-sm">
+  <div class="card-header admin-card-header d-flex flex-wrap justify-content-between align-items-center border-0 bg-transparent py-3">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-traffic-light-fill fs-4 text-warning"></i>
+      <div>
+        <h5 class="mb-0 fw-bold text-light">Semáforo de Urgencia — Parque de 130 Motores</h5>
+        <small class="text-muted">Ciclo preventivo de lubricación, rodamientos y mediciones eléctricas</small>
+      </div>
+    </div>
+    <a href="{{ url_for('encargado.listar_equipos') }}" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-grid-3x3-gap me-1"></i>Ver Inventario Completo
+    </a>
+  </div>
+  <div class="card-body p-3 pt-0">
+    <div class="row g-3">
+      <!-- 🔴 ROJO: URGENCIA ALTA -->
+      <div class="col-md-4">
+        <div class="admin-semaforo-box semaforo-box-alta p-3 rounded h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot-semaforo dot-alta"></span>
+              <span class="fw-bold text-danger text-uppercase small">🔴 Urgencia Alta</span>
+            </div>
+            <span class="badge bg-danger rounded-pill px-2 py-1 fs-6">{{ kpis.motores_alta }}</span>
+          </div>
+          <p class="small text-muted mb-3">
+            <strong>Vencidos o críticos:</strong> Superaron su frecuencia máxima de servicio o tienen pendientes correctivos. Intervención prioritaria.
+          </p>
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="small fw-semibold text-danger">Días restantes &le; 0</span>
+            <a href="{{ url_for('encargado.listar_equipos', urgencia='alta') }}" class="btn btn-sm btn-danger py-1 px-3 shadow-sm">
+              <i class="bi bi-exclamation-triangle me-1"></i>Ver Críticos ({{ kpis.motores_alta }})
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🟡 AMARILLO: URGENCIA MEDIA -->
+      <div class="col-md-4">
+        <div class="admin-semaforo-box semaforo-box-media p-3 rounded h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot-semaforo dot-media"></span>
+              <span class="fw-bold text-warning text-uppercase small">🟡 Urgencia Media</span>
+            </div>
+            <span class="badge bg-warning text-dark rounded-pill px-2 py-1 fs-6 fw-bold">{{ kpis.motores_media }}</span>
+          </div>
+          <p class="small text-muted mb-3">
+            <strong>Preventivo próximo:</strong> Motores que vencen dentro de los próximos 15 días. Programar parada de molino, lubricación y repuestos.
+          </p>
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="small fw-semibold text-warning">1 a 15 días restantes</span>
+            <a href="{{ url_for('encargado.listar_equipos', urgencia='media') }}" class="btn btn-sm btn-warning py-1 px-3 shadow-sm text-dark fw-semibold">
+              <i class="bi bi-clock-history me-1"></i>Ver Próximos ({{ kpis.motores_media }})
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🟢 VERDE: URGENCIA BAJA -->
+      <div class="col-md-4">
+        <div class="admin-semaforo-box semaforo-box-baja p-3 rounded h-100">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="dot-semaforo dot-baja"></span>
+              <span class="fw-bold text-emerald text-uppercase small">🟢 Urgencia Baja</span>
+            </div>
+            <span class="badge bg-success rounded-pill px-2 py-1 fs-6">{{ kpis.motores_baja }}</span>
+          </div>
+          <p class="small text-muted mb-3">
+            <strong>Al día y operativos:</strong> Motores con mantenimiento reciente y parámetros de vibración, temperatura y corriente estables.
+          </p>
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="small fw-semibold text-emerald">&gt; 15 días restantes</span>
+            <a href="{{ url_for('encargado.listar_equipos', urgencia='baja') }}" class="btn btn-sm btn-success py-1 px-3 shadow-sm">
+              <i class="bi bi-check-circle me-1"></i>Ver Al Día ({{ kpis.motores_baja }})
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTA DE MOTORES CRÍTICOS VENCIDOS (URGENCIA ALTA) -->
+{% if equipos_vencidos %}
+<div class="card admin-card border-danger mb-4 shadow-sm" style="background: rgba(220, 38, 38, 0.08);">
+  <div class="card-body p-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-octagon-fill text-danger fs-4"></i>
+        <strong class="text-danger fs-6">Atención Requerida — {{ equipos_vencidos | length }} Motores en Urgencia Alta (🔴 Rojo):</strong>
+      </div>
+      <a href="{{ url_for('encargado.listar_equipos', urgencia='alta') }}" class="btn btn-sm btn-outline-danger py-0 px-2 small">Ver todos los vencidos</a>
+    </div>
+    <div class="row g-2 mt-1">
+      {% for eq in equipos_vencidos[:6] %}
+      <div class="col-md-6 col-lg-4">
+        <div class="p-2 rounded border border-danger-subtle bg-dark small">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-danger font-monospace">{{ eq.codigo or 'Motor' }}</span>
+            <span class="badge {{ 'badge-hp-80' if eq.potencia_hp == 80 else 'badge-hp-grande' }}">{{ eq.potencia_display() }}</span>
+          </div>
+          <div class="fw-semibold text-light text-truncate mt-1">{{ eq.nombre }}</div>
+          <div class="text-muted small">Área: {{ eq.area | capitalize }} | Retraso: <strong class="text-danger">{{ (eq.dias_restantes() | abs) }} días</strong></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ======================================================================== -->
+<!-- FILA 4: TABLA DE HISTORIAL DE ÓRDENES DE TRABAJO (FMT-MTO-01)            -->
+<!-- ======================================================================== -->
+<div class="card admin-card shadow-sm border-0" id="tabla-mantenimientos">
+  <div class="card-header admin-card-header d-flex flex-wrap justify-content-between align-items-center gap-2 border-0 bg-transparent py-3">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-journal-check text-cyan fs-4"></i>
+      <div>
+        <h5 class="mb-0 fw-bold text-light">Historial de Órdenes de Trabajo FMT-MTO-01</h5>
+        <small class="text-muted">Intervenciones realizadas por el equipo técnico en Molino La Corona</small>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <div class="input-group input-group-sm" style="max-width: 240px;">
+        <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" id="filtroTablaOT" class="form-control bg-dark border-secondary text-light" placeholder="Filtrar en tabla...">
+      </div>
+      <span class="badge bg-secondary-subtle text-light border border-secondary px-2 py-1 small">{{ registros | length }} OTs</span>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table admin-table table-hover mb-0 align-middle" id="tablaOTs">
+        <thead>
+          <tr>
+            <th>N.° OT</th>
+            <th>Fecha</th>
+            <th>Código</th>
+            <th>Motor / Equipo</th>
+            <th>Potencia</th>
+            <th>Área Molino</th>
+            <th>Técnico</th>
+            <th>Tipo</th>
+            <th>Semáforo</th>
+            <th>Trabajo Realizado</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in registros %}
+          {% set urg = r.equipo.nivel_urgencia() if r.equipo else 'baja' %}
+          <tr>
+            <td><strong class="font-monospace text-danger small">{{ r.codigo_ot() }}</strong></td>
+            <td class="text-nowrap text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ r.fecha }}</td>
+            <td><span class="badge bg-dark border border-secondary font-monospace">{{ r.equipo.codigo if r.equipo else ('M-' ~ r.id) }}</span></td>
+            <td class="fw-semibold text-light">{{ r.equipo.nombre if r.equipo else r.descripcion_equipo }}</td>
+            <td>
+              {% if r.equipo %}
+              <span class="badge {{ 'badge-hp-80' if r.equipo.potencia_hp == 80 else ('badge-hp-grande' if r.equipo.potencia_hp and r.equipo.potencia_hp >= 50 else 'badge-hp-mediano') }}">
+                {{ r.equipo.potencia_display() }}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if r.equipo %}
+              <span class="badge badge-area-{{ r.equipo.area }}">
+                {{ r.equipo.area | capitalize }}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">General</span>
+              {% endif %}
+            </td>
+            <td><small class="text-light">{{ r.ejecutante_nombre or (r.tecnico.nombre_completo if r.tecnico else '—') }}</small></td>
+            <td>
+              <span class="badge {{ 'bg-primary' if r.tipo == 'preventivo' else 'bg-danger' }}">
+                {{ r.tipos_trabajo or (r.tipo | capitalize if r.tipo else 'Mantenimiento') }}
+              </span>
+            </td>
+            <td>
+              {% if r.equipo %}
+              <span class="badge-urgencia-{{ urg }}">
+                <span class="dot-semaforo dot-{{ urg }}"></span>
+                {{ r.equipo.etiqueta_urgencia() }}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">Normal</span>
+              {% endif %}
+            </td>
+            <td><small class="text-muted d-inline-block text-truncate" style="max-width: 200px;">{{ r.trabajo_realizado or r.hallazgo or '—' }}</small></td>
+            <td>
+              {% if r.validado %}
+              <span class="badge badge-validado"><i class="bi bi-check-circle me-1"></i>Validado</span>
+              {% else %}
+              <span class="badge badge-pendiente"><i class="bi bi-clock me-1"></i>Pendiente</span>
+              {% endif %}
+            </td>
+            <td class="text-center text-nowrap">
+              <a href="{{ url_for('encargado.validar', registro_id=r.id) }}" class="btn btn-sm btn-gradient-cyan me-1" title="Validar o revisar orden de trabajo">
+                <i class="bi bi-pencil-square me-1"></i>{{ 'Revisar' if r.validado else 'Validar' }}
+              </a>
+              <a href="{{ url_for('encargado.ver_ot', registro_id=r.id) }}" class="btn btn-sm btn-outline-secondary" title="Ver e imprimir formato oficial FMT-MTO-01">
+                <i class="bi bi-printer"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="12" class="text-center py-4 text-muted">No se registran actividades de mantenimiento.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- SCRIPTS DE GENERACIÓN DE GRÁFICAS ESTILO ROCKER DASHBOARD                -->
+<!-- ======================================================================== -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  
+  // Datos inyectados desde el backend
+  const chartConsumoData = {{ chart_consumo | tojson | safe }};
+  const chartMantenimientoData = {{ chart_mantenimiento | tojson | safe }};
+  const kpisData = {{ kpis | tojson | safe }};
+
+  // -------------------------------------------------------------------------
+  // 1. GRÁFICA: BALANCE ENERGÉTICO Y FACTURACIÓN (Sales Overview)
+  // Curvas de spline suaves con degradado luminoso inferior
+  // -------------------------------------------------------------------------
+  const ctxBalance = document.getElementById("graficoBalanceEnergetico");
+  if (ctxBalance) {
+    const ctx = ctxBalance.getContext("2d");
+
+    // Degradado Cyan para Consumo
+    const gradCyan = ctx.createLinearGradient(0, 0, 0, 300);
+    gradCyan.addColorStop(0, "rgba(0, 229, 255, 0.35)");
+    gradCyan.addColorStop(1, "rgba(0, 229, 255, 0.0)");
+
+    // Degradado Amber/Orange para Facturación
+    const gradAmber = ctx.createLinearGradient(0, 0, 0, 300);
+    gradAmber.addColorStop(0, "rgba(245, 158, 11, 0.35)");
+    gradAmber.addColorStop(1, "rgba(245, 158, 11, 0.0)");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: chartConsumoData.labels,
+        datasets: [
+          {
+            label: "Consumo (kWh)",
+            data: chartConsumoData.kwh,
+            borderColor: "#f59e0b",
+            backgroundColor: gradAmber,
+            borderWidth: 3,
+            fill: true,
+            tension: 0.42,
+            pointBackgroundColor: "#f59e0b",
+            pointBorderColor: "#161e2e",
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            yAxisID: "yConsumo",
+          },
+          {
+            label: "Facturación (S/.)",
+            data: chartConsumoData.soles,
+            borderColor: "#00e5ff",
+            backgroundColor: gradCyan,
+            borderWidth: 3,
+            fill: true,
+            tension: 0.42,
+            pointBackgroundColor: "#00e5ff",
+            pointBorderColor: "#161e2e",
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            yAxisID: "ySoles",
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "rgba(17, 24, 39, 0.95)",
+            titleColor: "#f3f4f6",
+            bodyColor: "#f3f4f6",
+            borderColor: "rgba(255, 255, 255, 0.15)",
+            borderWidth: 1,
+            padding: 12,
+            boxPadding: 6,
+            usePointStyle: true,
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || "";
+                if (label.includes("Consumo")) {
+                  return label + ": " + context.raw.toLocaleString() + " kWh";
+                } else {
+                  return label + ": S/. " + context.raw.toLocaleString(undefined, {minimumFractionDigits: 2});
+                }
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: "#94a3b8", font: { size: 11 } }
+          },
+          yConsumo: {
+            type: "linear",
+            position: "left",
+            grid: { color: "rgba(255, 255, 255, 0.05)" },
+            ticks: {
+              color: "#94a3b8",
+              callback: function(val) { return (val / 1000) + "k"; }
+            }
+          },
+          ySoles: {
+            type: "linear",
+            position: "right",
+            grid: { drawOnChartArea: false },
+            ticks: {
+              color: "#94a3b8",
+              callback: function(val) { return "S/." + (val / 1000) + "k"; }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 2. GRÁFICA: ÓRDENES DE TRABAJO (Order Status - Barras cápsula luminosas)
+  // Vertical pill bars con degradado fucsia/naranja exacto a la imagen
+  // -------------------------------------------------------------------------
+  const ctxMto = document.getElementById("graficoMantenimientoBarras");
+  if (ctxMto) {
+    const ctx = ctxMto.getContext("2d");
+
+    // Degradado vertical Pink a Orange
+    const gradPinkOrange = ctx.createLinearGradient(0, 0, 0, 300);
+    gradPinkOrange.addColorStop(0, "#ec4899");
+    gradPinkOrange.addColorStop(0.5, "#f43f5e");
+    gradPinkOrange.addColorStop(1, "#f97316");
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: chartMantenimientoData.labels.map(l => l.length > 7 ? l.slice(5) : l),
+        datasets: [{
+          label: "Mantenimientos",
+          data: chartMantenimientoData.valores,
+          backgroundColor: gradPinkOrange,
+          borderRadius: 20,
+          borderSkipped: false,
+          barPercentage: 0.5,
+          categoryPercentage: 0.8,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "rgba(17, 24, 39, 0.95)",
+            titleColor: "#f3f4f6",
+            bodyColor: "#f3f4f6",
+            borderColor: "rgba(255, 255, 255, 0.15)",
+            borderWidth: 1,
+            callbacks: {
+              label: function(c) { return "OTs ejecutadas: " + c.raw; }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: "#94a3b8", font: { size: 11 } }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(255, 255, 255, 0.05)" },
+            ticks: { color: "#94a3b8", stepSize: 2 }
+          }
+        }
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 3. GRÁFICA: DONUT DEL SEMÁFORO DE URGENCIA (Nokia Donut style)
+  // Anillo de 3 colores con espacio central y animación
+  // -------------------------------------------------------------------------
+  const ctxDonut = document.getElementById("graficoSemaforoDonut");
+  if (ctxDonut) {
+    new Chart(ctxDonut, {
+      type: "doughnut",
+      data: {
+        labels: ["Urgencia Baja (Al Día)", "Urgencia Media (Próximo)", "Urgencia Alta (Crítico)"],
+        datasets: [{
+          data: [kpisData.motores_baja, kpisData.motores_media, kpisData.motores_alta],
+          backgroundColor: [
+            "#10b981", // Verde brillante
+            "#0ea5e9", // Azul / Celeste
+            "#ef4444"  // Rojo brillante
+          ],
+          borderColor: "#161e2e",
+          borderWidth: 4,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "75%",
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "rgba(17, 24, 39, 0.95)",
+            titleColor: "#f3f4f6",
+            bodyColor: "#f3f4f6",
+            borderColor: "rgba(255, 255, 255, 0.15)",
+            borderWidth: 1,
+            callbacks: {
+              label: function(c) {
+                const total = kpisData.total_equipos || 130;
+                const pct = ((c.raw / total) * 100).toFixed(1);
+                return c.label + ": " + c.raw + " motores (" + pct + "%)";
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 4. FILTRO RÁPIDO EN VIVO PARA LA TABLA DE ÓRDENES DE TRABAJO
+  // -------------------------------------------------------------------------
+  const inputFiltro = document.getElementById("filtroTablaOT");
+  if (inputFiltro) {
+    inputFiltro.addEventListener("input", function() {
+      const term = this.value.toLowerCase().trim();
+      const filas = document.querySelectorAll("#tablaOTs tbody tr");
+      filas.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(term) ? "" : "none";
+      });
+    });
+  }
+
+});
+</script>
+{% endblock %}

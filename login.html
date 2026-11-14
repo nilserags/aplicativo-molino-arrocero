@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="row justify-content-center mt-4">
+  <div class="col-md-5 col-lg-4">
+    <div class="card card-custom shadow-sm border-0">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <div class="bg-light d-inline-block p-3 rounded-circle mb-2 text-primary">
+            <i class="bi bi-gear-wide-connected fs-1 text-warning"></i>
+          </div>
+          <h4 class="fw-bold text-primary-corona mb-0">Molino La Corona</h4>
+        </div>
+
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Usuario:</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input type="text" name="username" class="form-control" placeholder="Ingrese su usuario" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Contraseña:</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" id="inputPassword" class="form-control" placeholder="••••••••" required>
+              <button class="btn btn-outline-secondary" type="button" id="btnTogglePassword" title="Mostrar u ocultar contraseña" tabindex="-1">
+                <i class="bi bi-eye" id="iconoTogglePassword"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary-corona w-100 py-2 fw-semibold shadow-sm">
+            <i class="bi bi-key-fill me-2"></i>Ingresar al Sistema
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const btnToggle = document.getElementById('btnTogglePassword');
+    const inputPass = document.getElementById('inputPassword');
+    const iconoToggle = document.getElementById('iconoTogglePassword');
+
+    if (btnToggle && inputPass && iconoToggle) {
+      btnToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        const esPassword = inputPass.getAttribute('type') === 'password';
+        inputPass.setAttribute('type', esPassword ? 'text' : 'password');
+        
+        if (esPassword) {
+          iconoToggle.classList.remove('bi-eye');
+          iconoToggle.classList.add('bi-eye-slash');
+          btnToggle.setAttribute('title', 'Ocultar contraseña');
+        } else {
+          iconoToggle.classList.remove('bi-eye-slash');
+          iconoToggle.classList.add('bi-eye');
+          btnToggle.setAttribute('title', 'Mostrar contraseña');
+        }
+        inputPass.focus();
+      });
+    }
+  });
+</script>
+{% endblock %}

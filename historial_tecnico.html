@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h3 class="mb-1 text-primary-corona"><i class="bi bi-clock-history me-2 text-primary"></i>Mi Historial de Registros</h3>
+    <p class="text-muted mb-0">
+      <strong>Molino La Corona:</strong> Inspecciones de motores ingresadas bajo su usuario técnico (consulta de solo lectura)
+    </p>
+  </div>
+  <a href="{{ url_for('tecnico.registrar') }}" class="btn btn-accent-corona btn-sm fw-semibold shadow-sm">
+    <i class="bi bi-plus-circle me-1"></i>Nuevo Mantenimiento
+  </a>
+</div>
+
+<div class="card card-custom">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-custom mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>N.° OT</th>
+            <th>Fecha</th>
+            <th>Código</th>
+            <th>Motor / Máquina</th>
+            <th>Potencia</th>
+            <th>Área Molino</th>
+            <th>Tipo</th>
+            <th>Semáforo Urgencia</th>
+            <th>Trabajo Realizado</th>
+            <th>Validación</th>
+            <th class="text-center">Formato Oficial</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in registros %}
+          {% set urg = r.equipo.nivel_urgencia() %}
+          <tr>
+            <td><strong class="font-monospace text-danger small">{{ r.codigo_ot() }}</strong></td>
+            <td class="text-nowrap"><i class="bi bi-calendar3 me-1 text-muted"></i>{{ r.fecha }}</td>
+            <td><strong class="font-monospace text-dark">{{ r.equipo.codigo or ('M-' ~ r.equipo.id) }}</strong></td>
+            <td class="fw-semibold">{{ r.equipo.nombre }}</td>
+            <td>
+              <span class="badge {{ 'badge-hp-80' if r.equipo.potencia_hp == 80 else ('badge-hp-grande' if r.equipo.potencia_hp and r.equipo.potencia_hp >= 50 else 'badge-hp-mediano') }}">
+                {{ r.equipo.potencia_display() }}
+              </span>
+            </td>
+            <td>
+              <span class="badge badge-area-{{ r.equipo.area }}">
+                {{ r.equipo.area | capitalize }}
+              </span>
+            </td>
+            <td>
+              <span class="badge {{ 'bg-primary' if r.tipo == 'preventivo' else 'bg-danger' }}">
+                {{ r.tipos_trabajo or (r.tipo | capitalize) }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-urgencia-{{ urg }}">
+                <span class="dot-semaforo dot-{{ urg }}"></span>
+                {{ r.equipo.etiqueta_urgencia() }}
+              </span>
+            </td>
+            <td><small class="text-muted d-inline-block text-truncate" style="max-width: 200px;">{{ r.trabajo_realizado or r.hallazgo }}</small></td>
+            <td>
+              {% if r.validado %}
+              <span class="badge badge-validado"><i class="bi bi-check-circle me-1"></i>Validado</span>
+              {% else %}
+              <span class="badge badge-pendiente"><i class="bi bi-clock me-1"></i>Pendiente</span>
+              {% endif %}
+            </td>
+            <td class="text-center text-nowrap">
+              <a href="{{ url_for('tecnico.ver_ot', registro_id=r.id) }}" class="btn btn-sm btn-outline-primary" title="Ver formato completo FMT-MTO-01 para imprimir">
+                <i class="bi bi-file-earmark-text me-1"></i>Ver OT
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="11" class="text-center py-4 text-muted">Aún no tiene registros de mantenimiento guardados.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

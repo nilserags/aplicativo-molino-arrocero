@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-lg-10 col-xl-9">
+    <div class="card card-custom shadow-sm mb-4">
+      <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+        <div>
+          <span class="fs-5 fw-bold">
+            <i class="bi bi-shield-check me-2 text-primary"></i>Validación y Cierre de Orden de Trabajo: {{ registro.codigo_ot() }}
+          </span>
+          <div class="small text-muted font-monospace">Formato Oficial FMT-MTO-01 Versión 02 — Molino La Corona</div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('encargado.ver_ot', registro_id=registro.id) }}" class="btn btn-outline-primary btn-sm" target="_blank" title="Abrir formato completo para imprimir">
+            <i class="bi bi-printer me-1"></i>Ver Formato OT (Imprimir)
+          </a>
+          <a href="{{ url_for('encargado.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Volver al Panel
+          </a>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        {% set eq = registro.equipo %}
+        {% set urg = eq.nivel_urgencia() if eq else 'baja' %}
+        
+        <!-- Ficha Resumen FMT-MTO-01 -->
+        <div class="bg-light p-3 rounded border mb-4">
+          <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+            <h6 class="fw-bold text-dark mb-0">
+              <i class="bi bi-gear-fill text-warning me-1"></i>Datos de la Intervención Técnica en Planta
+            </h6>
+            <div class="d-flex gap-2 align-items-center">
+              <span class="badge bg-dark font-monospace">{{ registro.codigo_ot() }}</span>
+              <span class="badge-urgencia-{{ urg }}">
+                <span class="dot-semaforo dot-{{ urg }}"></span>
+                {{ eq.etiqueta_urgencia() if eq else 'Normal' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="row g-3 small">
+            <div class="col-md-6">
+              <span class="text-muted d-block">Motor / Equipo Intervenido:</span>
+              <strong class="fs-6">[{{ eq.codigo if eq else 'M' }}] {{ eq.nombre if eq else registro.descripcion_equipo }}</strong>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted d-block">Potencia Nominal:</span>
+              <span class="badge {{ 'badge-hp-80' if eq and eq.potencia_hp == 80 else 'badge-hp-grande' }}">
+                {{ eq.potencia_display() if eq else '—' }}
+              </span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted d-block">Área de Proceso:</span>
+              <span class="badge badge-area-{{ eq.area if eq else 'general' }}">
+                Línea {{ eq.area | capitalize if eq else 'General' }}
+              </span>
+            </div>
+
+            <div class="col-md-4">
+              <span class="text-muted d-block">Técnico Ejecutante:</span>
+              <strong>{{ registro.ejecutante_nombre or (registro.tecnico.nombre_completo if registro.tecnico else 'N/A') }}</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted d-block">Fecha y Horario:</span>
+              <strong>{{ registro.fecha_inicio or registro.fecha }} ({{ registro.hora_inicio or '08:00' }} - {{ registro.hora_fin or '12:00' }})</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted d-block">Horómetro / Parada:</span>
+              <strong>{{ registro.horometro or 'N/A' }} h | Parada: {{ registro.tiempo_parada_horas or 0 }} h</strong>
+            </div>
+
+            <div class="col-md-6">
+              <span class="text-muted d-block">Tipo de Trabajo:</span>
+              <span class="badge bg-primary me-1">{{ registro.tipos_trabajo or registro.tipo | capitalize }}</span>
+              <span class="badge bg-secondary">Prioridad: {{ registro.prioridad or 'Normal' }}</span>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted d-block">Causa Raíz / Detección:</span>
+              <span>{{ registro.causa_raiz or 'Desgaste normal' }} (Detectado por: {{ registro.como_se_detecto or 'Inspección' }})</span>
+            </div>
+
+            <div class="col-12 border-top pt-2">
+              <span class="text-muted d-block mb-1">Trabajo Realizado / Diagnóstico Reportado:</span>
+              <div class="p-2 bg-white rounded border">
+                {{ registro.trabajo_realizado or registro.hallazgo }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla comparativa de mediciones antes/después -->
+        <div class="mb-4">
+          <h6 class="fw-bold text-secondary mb-2">
+            <i class="bi bi-activity me-1"></i>Mediciones de Control Operativo (Antes vs. Después):
+          </h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Vibración (mm/s)</th>
+                  <th>Temperatura (°C)</th>
+                  <th>Corriente (A)</th>
+                  <th>Ruido Operativo</th>
+                  <th>Costo Repuestos</th>
+                  <th>Costo M.O.</th>
+                  <th>Costo Total S/</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="text-muted small">{{ registro.vibracion_antes if registro.vibracion_antes is not none else '—' }}</span>
+                    <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                    <strong class="text-success">{{ registro.vibracion_despues if registro.vibracion_despues is not none else '—' }}</strong>
+                  </td>
+                  <td>
+                    <span class="text-muted small">{{ registro.temperatura_antes if registro.temperatura_antes is not none else '—' }}°</span>
+                    <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                    <strong class="text-success">{{ registro.temperatura_despues if registro.temperatura_despues is not none else '—' }}°C</strong>
+                  </td>
+                  <td>
+                    <span class="text-muted small">{{ registro.corriente_antes if registro.corriente_antes is not none else '—' }}</span>
+                    <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                    <strong class="text-success">{{ registro.corriente_despues if registro.corriente_despues is not none else '—' }} A</strong>
+                  </td>
+                  <td>
+                    <span class="badge {{ 'bg-success' if registro.ruido_despues == 'Normal' else 'bg-warning text-dark' }}">
+                      {{ registro.ruido_despues or 'Normal' }}
+                    </span>
+                  </td>
+                  <td class="font-monospace">S/ {{ "%.2f"|format(registro.costo_repuestos|float) if registro.costo_repuestos is not none else '0.00' }}</td>
+                  <td class="font-monospace">S/ {{ "%.2f"|format(registro.costo_mano_obra|float) if registro.costo_mano_obra is not none else '0.00' }}</td>
+                  <td class="font-monospace fw-bold text-success bg-light">S/ {{ "%.2f"|format(registro.costo_total|float) if registro.costo_total is not none else '0.00' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- FORMULARIO DE VALIDACIÓN Y CIERRE (FORMATO FMT-MTO-01) -->
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="card border-primary-subtle mb-4">
+            <div class="card-header bg-primary-subtle fw-bold text-primary">
+              <i class="bi bi-check2-square me-1"></i>Cierre y Validación Oficial de la Orden de Trabajo (Secciones 8 y 9)
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Prueba de Funcionamiento:</label>
+                  <div class="d-flex gap-3 mt-1">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="prueba_funcionamiento" value="OK" id="vPfOk" {{ 'checked' if registro.prueba_funcionamiento != 'No OK' else '' }}>
+                      <label class="form-check-label fw-bold text-success" for="vPfOk">
+                        <i class="bi bi-check-circle me-1"></i>OK (Conforme)
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="prueba_funcionamiento" value="No OK" id="vPfNoOk" {{ 'checked' if registro.prueba_funcionamiento == 'No OK' else '' }}>
+                      <label class="form-check-label fw-bold text-danger" for="vPfNoOk">
+                        <i class="bi bi-x-circle me-1"></i>No OK
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Validado Por (Responsable Técnico):</label>
+                  <input type="text" name="validado_por" value="{{ registro.validado_por or current_user.nombre_completo }}" class="form-control form-control-sm" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Fecha Próxima Intervención Sugerida:</label>
+                  <input type="date" name="fecha_proxima_intervencion" value="{{ registro.fecha_proxima_intervencion or (eq.proxima_fecha_sugerida() if eq else '') }}" class="form-control form-control-sm fw-bold font-monospace text-primary" required>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">Recomendación para el Próximo Mantenimiento:</label>
+                  <textarea name="recomendacion_proximo_mto" rows="2" class="form-control form-control-sm" placeholder="Instrucciones técnicas preventivas para la siguiente intervención...">{{ registro.recomendacion_proximo_mto or 'Monitoreo periódico de vibraciones con analizador y control térmico con pirómetro láser.' }}</textarea>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold small">
+                    <i class="bi bi-chat-left-dots me-1 text-primary"></i>Observaciones o Visto Bueno del Encargado (Supervisión Molino La Corona):
+                  </label>
+                  <textarea name="observacion_encargado" class="form-control" rows="3" placeholder="Ingrese comentarios de supervisión, aprobación de repuestos o conformidad técnica...">{{ registro.observacion_encargado or 'Revisado y conforme por supervisión de planta. Parámetros de vibración y temperatura dentro de límites normales.' }}</textarea>
+                  <div class="form-text small">
+                    Al confirmar, el registro pasará al estado <strong>Validado</strong> y quedará rubricado formalmente en el sistema.
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">Firma Supervisor / Gerente:</label>
+                  <input type="text" name="firma_supervisor" value="{{ registro.firma_supervisor or current_user.nombre_completo }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">Firma Oficina Técnica:</label>
+                  <input type="text" name="firma_oficina" value="{{ registro.firma_oficina or 'Oficina Técnica Molino La Corona' }}" class="form-control form-control-sm">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <a href="{{ url_for('encargado.dashboard') }}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary-corona py-2 px-4 fw-bold shadow-sm fs-6">
+              <i class="bi bi-check2-circle me-1"></i>Validar y Firmar Orden de Trabajo
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

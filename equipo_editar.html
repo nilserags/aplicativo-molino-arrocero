@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-md-10">
+    <div class="card card-custom shadow-sm">
+      <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+        <span class="fs-5">
+          <i class="bi bi-pencil-square me-2 text-primary"></i>Ficha Técnica del Motor — <strong>{{ equipo.codigo or ('M-' ~ equipo.id) }}</strong>
+        </span>
+        <a href="{{ url_for('encargado.listar_equipos') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i>Volver al Listado
+        </a>
+      </div>
+      <div class="card-body p-4">
+        <!-- Estado actual en el Semáforo de Urgencia -->
+        {% set urg = equipo.nivel_urgencia() %}
+        {% set dias = equipo.dias_restantes() %}
+        <div class="alert alert-light border d-flex justify-content-between align-items-center mb-4 p-3 rounded">
+          <div>
+            <div class="text-muted small">Estado actual según Semáforo de Urgencia:</div>
+            <div class="fw-bold fs-6 mt-1">
+              <span class="badge-urgencia-{{ urg }}">
+                <span class="dot-semaforo dot-{{ urg }}"></span>
+                {{ equipo.etiqueta_urgencia() }}
+              </span>
+            </div>
+          </div>
+          <div class="text-end">
+            <span class="small text-muted d-block">Próximo mantenimiento:</span>
+            <strong class="{{ 'text-danger' if dias <= 0 else ('text-warning-emphasis' if dias <= 15 else 'text-success') }}">
+              {{ 'Vencido hace ' ~ (dias | abs) ~ ' días' if dias <= 0 else ('En ' ~ dias ~ ' días') }}
+            </strong>
+          </div>
+        </div>
+
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Código del Motor:</label>
+              <input type="text" name="codigo" class="form-control font-monospace" value="{{ equipo.codigo or '' }}" placeholder="Ej. M-001" required>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Nombre del Motor / Máquina:</label>
+              <input type="text" name="nombre" class="form-control" value="{{ equipo.nombre }}" placeholder="Ej. Motor Blanqueador Vertical N°1" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Área del Molino:</label>
+              <select name="area" class="form-select" required>
+                <option value="blanqueo" {{ 'selected' if equipo.area == 'blanqueo' }}>Blanqueo, Pulido y Abrillantado (80 HP)</option>
+                <option value="descascarado" {{ 'selected' if equipo.area == 'descascarado' }}>Descascarado & Separación Paddy</option>
+                <option value="secado" {{ 'selected' if equipo.area == 'secado' }}>Secado & Silos de Almacenamiento</option>
+                <option value="prelimpieza" {{ 'selected' if equipo.area == 'prelimpieza' }}>Tolvas, Recepción & Prelimpieza</option>
+                <option value="clasificacion" {{ 'selected' if equipo.area == 'clasificacion' }}>Clasificación por Tamaño & Ensacado</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Frecuencia de Mantenimiento:</label>
+              <div class="input-group">
+                <input type="number" name="frecuencia_mantenimiento_dias" class="form-control" value="{{ equipo.frecuencia_mantenimiento_dias }}" required>
+                <span class="input-group-text">días</span>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Marca del Motor:</label>
+              <input type="text" name="marca" class="form-control" value="{{ equipo.marca or '' }}" placeholder="Ej. WEG, Siemens, ABB, Delcrosa">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Modelo:</label>
+              <input type="text" name="modelo" class="form-control" value="{{ equipo.modelo or '' }}" placeholder="Ej. W22 Super Premium, Simotics 1LE1">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold text-primary">Potencia Nominal (HP):</label>
+              <div class="input-group">
+                <input type="number" step="0.5" name="potencia_hp" id="inputHp" class="form-control fw-bold" value="{{ equipo.potencia_hp or '' }}" placeholder="Ej. 80.0" oninput="calcularKw()">
+                <span class="input-group-text bg-primary text-white fw-bold">HP</span>
+              </div>
+              <div class="form-text small">Molino La Corona cuenta con motores de hasta 80 HP.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Potencia Equivalente (kW):</label>
+              <div class="input-group">
+                <input type="number" step="0.1" name="potencia_kw" id="inputKw" class="form-control" value="{{ equipo.potencia_kw or '' }}" placeholder="Ej. 59.7">
+                <span class="input-group-text">kW</span>
+              </div>
+              <div class="form-text small">Cálculo automático: 1 HP &approx; 0.7457 kW.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Año de Instalación:</label>
+              <input type="number" name="anio_instalacion" class="form-control" value="{{ equipo.anio_instalacion or '' }}" placeholder="Ej. 2021">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Horas de Operación / Día:</label>
+              <div class="input-group">
+                <input type="number" step="0.5" name="horas_uso_dia" class="form-control" value="{{ equipo.horas_uso_dia or '' }}" placeholder="Ej. 18.0">
+                <span class="input-group-text">h/día</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4 pt-3 border-top">
+            <button type="submit" class="btn btn-primary-corona py-2 px-4 fw-semibold shadow-sm">
+              <i class="bi bi-check-circle me-1"></i>Guardar Ficha Técnica de Motor
+            </button>
+            <a href="{{ url_for('encargado.listar_equipos') }}" class="btn btn-outline-secondary py-2 px-3">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function calcularKw() {
+    const hpInput = document.getElementById('inputHp');
+    const kwInput = document.getElementById('inputKw');
+    const val = parseFloat(hpInput.value);
+    if (!isNaN(val) && val > 0) {
+      kwInput.value = (val * 0.7457).toFixed(1);
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+===========================================================================
+ REPORTE DEL MODELO PREDICTIVO PARA LA MEMORIA DE TESIS
+ Tesista: Aguilar Silva Nilser Lemuel | FIME - UNAS
+ Molino La Corona — Tingo María, Perú
+ Auditoría Energética de 130 Motores Eléctricos (Facturación ~S/. 70,000/mes)
+===========================================================================
+
+1. ECUACIÓN DEL MODELO DE REGRESIÓN OBTENIDA:
+   EnPI (kWh/ton) = 56.2284 - 2.3921 * [ton_arroz_cascara] + 3.4515 * [ton_arroz_pilado] + 0.0794 * [horas_molienda] + 0.0194 * [humedad_paddy_pct] + 0.1385 * [temperatura_secado_C]
+
+2. VARIABLES INDEPENDIENTES SELECCIONADAS:
+   - ton_arroz_cascara: coef=-2.3921, p-valor=3.3951e-01
+   - ton_arroz_pilado: coef=3.4515, p-valor=3.4155e-01
+   - horas_molienda: coef=0.0794, p-valor=9.9121e-02
+   - humedad_paddy_pct: coef=0.0194, p-valor=9.5352e-01
+   - temperatura_secado_C: coef=0.1385, p-valor=6.4718e-01
+
+3. PARÁMETROS DE VALIDACIÓN ESTADÍSTICA (Específico 2):
+   - Coeficiente de determinación (R² ajuste):   0.9919
+   - Coeficiente R² ajustado:                   0.9888
+   - R² en conjunto de validación (test 20%):   0.9932
+   - Raíz del Error Cuadrático Medio (RMSE):    0.1232 kWh/ton
+   - Error Porcentual Absoluto Medio (MAPE):    0.18 %
+
+4. TABLA ANOVA COMPLETA DE STATSMODELS:
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:           enpi_kwh_ton   R-squared:                       0.992
+Model:                            OLS   Adj. R-squared:                  0.989
+Method:                 Least Squares   F-statistic:                     319.7
+Date:                Tue, 06 Oct 2026   Prob (F-statistic):           3.97e-13
+Time:                        09:41:05   Log-Likelihood:                -1.0900
+No. Observations:                  19   AIC:                             14.18
+Df Residuals:                      13   BIC:                             19.85
+Df Model:                           5                                         
+Covariance Type:            nonrobust                                         
+========================================================================================
+                           coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+const                   56.2284     12.992      4.328      0.001      28.161      84.296
+ton_arroz_cascara       -2.3921      2.412     -0.992      0.340      -7.604       2.820
+ton_arroz_pilado         3.4515      3.496      0.987      0.342      -4.101      11.004
+horas_molienda           0.0794      0.045      1.776      0.099      -0.017       0.176
+humedad_paddy_pct        0.0194      0.327      0.059      0.954      -0.688       0.726
+temperatura_secado_C     0.1385      0.296      0.469      0.647      -0.500       0.777
+==============================================================================
+Omnibus:                        3.266   Durbin-Watson:                   2.051
+Prob(Omnibus):                  0.195   Jarque-Bera (JB):                2.321
+Skew:                           0.851   Prob(JB):                        0.313
+Kurtosis:                       2.809   Cond. No.                     1.08e+06
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+[2] The condition number is large, 1.08e+06. This might indicate that there are
+strong multicollinearity or other numerical problems.

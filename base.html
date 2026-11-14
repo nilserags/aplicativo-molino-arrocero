@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Sistema de Mantenimiento & Auditoría Energética — Molino La Corona</title>
+  
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{% if current_user.is_authenticated and current_user.rol == 'encargado' %}admin-layout-body admin-dark-theme{% else %}normal-layout-body{% endif %}">
+
+{% if current_user.is_authenticated and current_user.rol == 'encargado' %}
+  <!-- ====================================================================== -->
+  <!-- ADMIN DASHBOARD LAYOUT CON BARRA LATERAL (ROL: ENCARGADO)              -->
+  <!-- ====================================================================== -->
+  <div class="admin-wrapper" id="adminWrapper">
+    
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <!-- Marca / Logo -->
+      <div class="admin-sidebar-header">
+        <a href="{{ url_for('encargado.dashboard') }}" class="sidebar-brand-link">
+          <div class="sidebar-brand-icon">
+            <i class="bi bi-gear-wide-connected text-warning"></i>
+          </div>
+          <div class="sidebar-brand-text">
+            <span class="brand-title">Molino La Corona</span>
+            <span class="brand-subtitle">SALA DE CONTROL &bull; ADMIN</span>
+          </div>
+        </a>
+        <button type="button" class="btn-sidebar-collapse d-none d-lg-flex" id="btnSidebarCollapse" title="Colapsar o expandir barra lateral">
+          <i class="bi bi-chevron-left" id="collapseIcon"></i>
+        </button>
+      </div>
+
+      <!-- Menú de Navegación Lateral -->
+      <div class="admin-sidebar-nav">
+        <!-- SECCIÓN: DASHBOARD -->
+        <div class="menu-category-title">PANEL PRINCIPAL</div>
+        <ul class="nav flex-column menu-list">
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.endpoint == 'encargado.dashboard' }}" href="{{ url_for('encargado.dashboard') }}">
+              <i class="bi bi-speedometer2 link-icon text-cyan"></i>
+              <span class="link-label">Dashboard General</span>
+              <span class="badge bg-primary-subtle text-cyan ms-auto sidebar-pill">Live</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.endpoint == 'encargado.graficos' }}" href="{{ url_for('encargado.graficos') }}">
+              <i class="bi bi-graph-up-arrow link-icon text-warning"></i>
+              <span class="link-label">Auditoría & Gráficas</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.endpoint == 'encargado.simulador_enpi' }}" href="{{ url_for('encargado.simulador_enpi') }}">
+              <i class="bi bi-calculator-fill link-icon text-emerald"></i>
+              <span class="link-label">Simulador EnPI</span>
+              <span class="badge bg-warning text-dark ms-auto sidebar-pill fw-bold">ISO 50006</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- SECCIÓN: GESTIÓN ELECTROMECÁNICA -->
+        <div class="menu-category-title">GESTIÓN ELECTROMECÁNICA</div>
+        <ul class="nav flex-column menu-list">
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.endpoint == 'encargado.listar_equipos' and not request.args.get('urgencia') }}" href="{{ url_for('encargado.listar_equipos') }}">
+              <i class="bi bi-cpu-fill link-icon text-blue"></i>
+              <span class="link-label">Parque de Motores</span>
+              <span class="badge bg-secondary ms-auto sidebar-pill">{{ sidebar_kpis.total_motores or 130 }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.args.get('urgencia') == 'alta' }}" href="{{ url_for('encargado.listar_equipos', urgencia='alta') }}">
+              <i class="bi bi-exclamation-octagon-fill link-icon text-danger"></i>
+              <span class="link-label">Urgencia Alta (Rojo)</span>
+              {% if sidebar_kpis.alta is defined %}
+              <span class="badge bg-danger ms-auto sidebar-pill">{{ sidebar_kpis.alta }}</span>
+              {% endif %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.args.get('urgencia') == 'media' }}" href="{{ url_for('encargado.listar_equipos', urgencia='media') }}">
+              <i class="bi bi-clock-history link-icon text-warning"></i>
+              <span class="link-label">Urgencia Media (Ámbar)</span>
+              {% if sidebar_kpis.media is defined %}
+              <span class="badge bg-warning text-dark ms-auto sidebar-pill fw-bold">{{ sidebar_kpis.media }}</span>
+              {% endif %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.args.get('urgencia') == 'baja' }}" href="{{ url_for('encargado.listar_equipos', urgencia='baja') }}">
+              <i class="bi bi-check-circle-fill link-icon text-success"></i>
+              <span class="link-label">Urgencia Baja (Al Día)</span>
+              {% if sidebar_kpis.baja is defined %}
+              <span class="badge bg-success ms-auto sidebar-pill">{{ sidebar_kpis.baja }}</span>
+              {% endif %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link" href="{{ url_for('encargado.dashboard') }}#tabla-mantenimientos">
+              <i class="bi bi-clipboard2-check-fill link-icon text-info"></i>
+              <span class="link-label">Órdenes FMT-MTO-01</span>
+              {% if sidebar_kpis.pendientes and sidebar_kpis.pendientes > 0 %}
+              <span class="badge bg-danger ms-auto sidebar-pill" title="Órdenes pendientes de validación">{{ sidebar_kpis.pendientes }}</span>
+              {% endif %}
+            </a>
+          </li>
+        </ul>
+
+        <!-- SECCIÓN: AUDITORÍA & FINANZAS -->
+        <div class="menu-category-title">AUDITORÍA & FINANZAS</div>
+        <ul class="nav flex-column menu-list">
+          <li class="nav-item">
+            <a class="nav-link sidebar-link {{ 'active' if request.endpoint == 'encargado.registrar_consumo' }}" href="{{ url_for('encargado.registrar_consumo') }}">
+              <i class="bi bi-lightning-charge-fill link-icon text-amber"></i>
+              <span class="link-label">Registrar Consumo</span>
+              <span class="badge bg-warning-subtle text-warning border border-warning-subtle ms-auto sidebar-pill">~S/. 70k</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link" href="{{ url_for('encargado.graficos') }}#graficoPenalizacionesReactiva">
+              <i class="bi bi-cash-coin link-icon text-danger"></i>
+              <span class="link-label">Pérdidas Reactivas</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link" href="{{ url_for('encargado.exportar_mantenimientos') }}">
+              <i class="bi bi-file-earmark-excel-fill link-icon text-success"></i>
+              <span class="link-label">Exportar OTs (CSV)</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link" href="{{ url_for('encargado.exportar_consumo') }}">
+              <i class="bi bi-file-earmark-spreadsheet-fill link-icon text-primary"></i>
+              <span class="link-label">Exportar Consumos (CSV)</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- SECCIÓN: SISTEMA & CUENTA -->
+        <div class="menu-category-title">SISTEMA & CUENTA</div>
+        <ul class="nav flex-column menu-list mb-4">
+          <li class="nav-item">
+            <div class="sidebar-user-widget">
+              <div class="user-avatar-circle">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <div class="user-details">
+                <span class="user-name text-truncate">{{ current_user.nombre_completo }}</span>
+                <span class="user-role badge bg-primary-subtle text-info">Encargado MTO</span>
+              </div>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link sidebar-link text-danger" href="{{ url_for('auth.logout') }}">
+              <i class="bi bi-box-arrow-right link-icon text-danger"></i>
+              <span class="link-label">Cerrar Sesión</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- FONDO TRASLÚCIDO PARA MÓVILES (BACKDROP) -->
+    <div class="admin-sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- CONTENEDOR PRINCIPAL DERECHO -->
+    <div class="admin-main">
+      
+      <!-- BARRA SUPERIOR (TOPBAR) -->
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <!-- Botón Toggle de la barra lateral -->
+          <button type="button" class="btn-topbar-action" id="btnSidebarToggle" aria-label="Abrir o cerrar barra lateral">
+            <i class="bi bi-list fs-4"></i>
+          </button>
+
+          <!-- Barra de búsqueda rápida estilo Rocker Dashboard -->
+          <form class="topbar-search-form d-none d-sm-flex" action="{{ url_for('encargado.listar_equipos') }}" method="GET">
+            <div class="search-box-wrapper">
+              <i class="bi bi-search search-box-icon"></i>
+              <input type="text" name="q" class="search-box-input" placeholder="Buscar motor, código, HP, área..." autocomplete="off">
+            </div>
+          </form>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Estado en vivo / Modo de Operación -->
+          {% if app_mode == 'demo' %}
+          <div class="topbar-pill-badge d-none d-md-flex border-warning" style="background: rgba(245, 158, 11, 0.12);">
+            <span class="dot-semaforo dot-media me-2"></span>
+            <span class="fw-bold text-warning small">DATOS DE PRUEBA (DEMO)</span>
+          </div>
+          {% else %}
+          <div class="topbar-pill-badge d-none d-md-flex border-success" style="background: rgba(16, 185, 129, 0.1);">
+            <span class="pulse-indicator-emerald"></span>
+            <span class="fw-semibold text-light">Molino Operativo (Producción)</span>
+          </div>
+          {% endif %}
+
+          <!-- Botón de Tema (Oscuro / Claro) -->
+          <button type="button" class="btn-topbar-action" id="btnThemeToggle" title="Alternar Modo Oscuro / Claro">
+            <i class="bi bi-sun-fill" id="themeIcon"></i>
+          </button>
+
+          <!-- Notificaciones de Alerta (Semáforo Urgencia Alta) -->
+          <div class="dropdown">
+            <button class="btn-topbar-action position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Motores con Mantenimiento Vencido">
+              <i class="bi bi-bell-fill"></i>
+              {% if sidebar_kpis.alta and sidebar_kpis.alta > 0 %}
+              <span class="topbar-badge bg-danger">{{ sidebar_kpis.alta }}</span>
+              {% endif %}
+            </button>
+            <div class="dropdown-menu dropdown-menu-end admin-dropdown-menu shadow-lg p-2" style="width: 320px;">
+              <div class="d-flex justify-content-between align-items-center p-2 border-bottom border-dark-subtle">
+                <span class="fw-bold small text-light">
+                  <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Motores Críticos ({{ sidebar_kpis.alta or 0 }})
+                </span>
+                <a href="{{ url_for('encargado.listar_equipos', urgencia='alta') }}" class="small text-info text-decoration-none">Ver todos</a>
+              </div>
+              <div class="dropdown-items-scroll py-1" style="max-height: 250px; overflow-y: auto;">
+                {% if sidebar_kpis.vencidos_muestra %}
+                  {% for v in sidebar_kpis.vencidos_muestra %}
+                  <a href="{{ url_for('encargado.listar_equipos', q=v.codigo) }}" class="dropdown-item admin-dropdown-item rounded p-2 mb-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="badge bg-danger font-monospace">{{ v.codigo }}</span>
+                      <span class="badge bg-danger-subtle text-danger small fw-bold">{{ (v.dias_restantes() | abs) }} días vencido</span>
+                    </div>
+                    <div class="small text-light text-truncate mt-1 fw-semibold">{{ v.nombre }}</div>
+                    <div class="text-muted small">Área: {{ v.area | capitalize }} | {{ v.potencia_display() }}</div>
+                  </a>
+                  {% endfor %}
+                {% else %}
+                  <div class="p-3 text-center text-muted small">
+                    <i class="bi bi-check2-circle text-success fs-4 d-block mb-1"></i>
+                    No hay motores en Urgencia Alta.
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- OTs Pendientes de Validación -->
+          <a href="{{ url_for('encargado.dashboard') }}#tabla-mantenimientos" class="btn-topbar-action position-relative" title="Órdenes de Trabajo por Validar">
+            <i class="bi bi-shield-check"></i>
+            {% if sidebar_kpis.pendientes and sidebar_kpis.pendientes > 0 %}
+            <span class="topbar-badge bg-warning text-dark fw-bold">{{ sidebar_kpis.pendientes }}</span>
+            {% endif %}
+          </a>
+
+          <!-- Separador -->
+          <div class="topbar-divider d-none d-sm-block"></div>
+
+          <!-- Menú de Usuario / Perfil -->
+          <div class="dropdown">
+            <button class="topbar-user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <div class="topbar-avatar">
+                <i class="bi bi-person-circle fs-3 text-info"></i>
+              </div>
+              <div class="topbar-user-info d-none d-lg-block text-start">
+                <div class="user-title fw-bold text-light">{{ current_user.nombre_completo }}</div>
+                <div class="user-sub small text-muted">Encargado MTO & Auditoría</div>
+              </div>
+              <i class="bi bi-chevron-down text-muted small ms-1 d-none d-sm-inline"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end admin-dropdown-menu shadow-lg p-2">
+              <li class="px-3 py-2 border-bottom border-dark-subtle mb-1">
+                <strong class="text-light d-block">{{ current_user.nombre_completo }}</strong>
+                <small class="text-muted font-monospace">Rol: Encargado de Planta</small>
+              </li>
+              <li>
+                <a class="dropdown-item admin-dropdown-item rounded" href="{{ url_for('encargado.dashboard') }}">
+                  <i class="bi bi-speedometer2 me-2 text-cyan"></i>Dashboard
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item admin-dropdown-item rounded" href="{{ url_for('encargado.listar_equipos') }}">
+                  <i class="bi bi-cpu me-2 text-primary"></i>130 Motores Eléctricos
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item admin-dropdown-item rounded" href="{{ url_for('encargado.simulador_enpi') }}">
+                  <i class="bi bi-calculator me-2 text-emerald"></i>Simulador EnPI (ISO 50006)
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item admin-dropdown-item rounded" href="{{ url_for('encargado.registrar_consumo') }}">
+                  <i class="bi bi-lightning-charge me-2 text-warning"></i>Registros de Consumo
+                </a>
+              </li>
+              <li><hr class="dropdown-divider border-dark-subtle"></li>
+              <li>
+                <a class="dropdown-item admin-dropdown-item rounded text-danger" href="{{ url_for('auth.logout') }}">
+                  <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <!-- CUERPO PRINCIPAL DEL DASHBOARD -->
+      <main class="admin-content-area">
+{% else %}
+  <!-- ====================================================================== -->
+  <!-- LAYOUT TRADICIONAL (ROL TÉCNICO O NO AUTENTICADO)                      -->
+  <!-- ====================================================================== -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-corona mb-4">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('tecnico.registrar') if current_user.is_authenticated else url_for('auth.login') }}">
+        <i class="bi bi-gear-wide-connected fs-3 text-warning"></i>
+        <span class="fs-5 fw-bold">Molino La Corona</span>
+      </a>
+
+      {% if current_user.is_authenticated %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPrincipal">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarPrincipal">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+          {% if current_user.rol == 'tecnico' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('tecnico.registrar') }}"><i class="bi bi-plus-circle me-1"></i>Nuevo Mantenimiento</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('tecnico.historial') }}"><i class="bi bi-clock-history me-1"></i>Mi Historial</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('tecnico.ver_equipos') }}"><i class="bi bi-tools me-1"></i>Fichas de Motores</a>
+          </li>
+          {% endif %}
+        </ul>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge badge-rol">
+            <i class="bi bi-person-fill me-1"></i>{{ current_user.nombre_completo }} ({{ current_user.rol | capitalize }})
+          </span>
+          <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">
+            <i class="bi bi-box-arrow-right me-1"></i>Salir
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Contenido principal tradicional -->
+  <main class="container mb-5 flex-grow-1">
+{% endif %}
+
+    <!-- AVISO VISIBLE DE MODO DEMO / DATOS DE PRUEBA -->
+    {% if app_mode == 'demo' and current_user.is_authenticated %}
+    <div class="alert alert-warning border border-warning shadow-sm d-flex flex-wrap align-items-center justify-content-between py-2 px-3 mb-4 rounded-3" role="alert" style="background: rgba(245, 158, 11, 0.15); color: #fef08a;">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-cone-striped fs-5 text-warning"></i>
+        <div>
+          <strong class="text-warning">AVISO — MODO DEMO CON DATOS DE PRUEBA:</strong>
+          <span class="small text-light ms-1">
+            Este entorno contiene registros históricos y semáforo simulados para la sustentación de tesis. Para iniciar con la base limpia en planta real, configure <code>APP_MODE=production</code> en el archivo <code>.env</code>.
+          </span>
+        </div>
+      </div>
+      <span class="badge bg-warning text-dark fw-bold text-uppercase px-2 py-1">Datos de Prueba</span>
+    </div>
+    {% endif %}
+
+    <!-- MENSAJES FLASH (COMÚN A AMBOS MODOS) -->
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% if mensajes %}
+        {% for categoria, mensaje in mensajes %}
+          <div class="alert alert-{{ categoria }} alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i>{{ mensaje }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- BLOQUE DE CONTENIDO PRINCIPAL -->
+    {% block contenido %}{% endblock %}
+
+  </main>
+
+{% if current_user.is_authenticated and current_user.rol == 'encargado' %}
+      <!-- PIE DE PÁGINA DEL ADMIN DASHBOARD -->
+      <footer class="admin-footer">
+        <div class="container-fluid px-4 py-3">
+          <div class="row align-items-center text-muted small">
+            <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+              <strong class="text-light">Molino La Corona</strong> &bull; Parque de 130 Motores (hasta 80 HP) &bull; Facturación ~S/. 70,000/mes
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+              Tesis FIME - UNAS &bull; <em>Aguilar Silva Nilser Lemuel</em> (Auditoría Energética & Mantenimiento)
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div><!-- /.admin-main -->
+  </div><!-- /.admin-wrapper -->
+{% else %}
+  <!-- PIE DE PÁGINA TRADICIONAL -->
+  <footer class="footer-corona">
+    <div class="container text-center">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-md-start text-muted">
+          <strong>Molino La Corona</strong> — Planta Agroindustrial de Arroz | Facturación ~S/. 70,000/mes
+        </div>
+        <div class="col-md-6 text-md-end text-muted">
+          Tesis FIME - UNAS | <em>Aguilar Silva Nilser Lemuel</em> (Auditoría Energética & Mantenimiento)
+        </div>
+      </div>
+    </div>
+  </footer>
+{% endif %}
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script interactivo de la Barra Lateral y Topbar -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const wrapper = document.getElementById("adminWrapper");
+      const sidebar = document.getElementById("adminSidebar");
+      const btnToggle = document.getElementById("btnSidebarToggle");
+      const btnCollapse = document.getElementById("btnSidebarCollapse");
+      const backdrop = document.getElementById("sidebarBackdrop");
+      const collapseIcon = document.getElementById("collapseIcon");
+      const btnTheme = document.getElementById("btnThemeToggle");
+      const themeIcon = document.getElementById("themeIcon");
+
+      // Cargar estado colapsado guardado en desktop
+      const isCollapsed = localStorage.getItem("molino_sidebar_collapsed") === "true";
+      if (isCollapsed && wrapper && window.innerWidth >= 992) {
+        wrapper.classList.add("sidebar-collapsed");
+        if (collapseIcon) {
+          collapseIcon.classList.replace("bi-chevron-left", "bi-chevron-right");
+        }
+      }
+
+      // Toggle para móviles / offcanvas
+      if (btnToggle) {
+        btnToggle.addEventListener("click", function() {
+          if (window.innerWidth < 992) {
+            sidebar.classList.toggle("sidebar-open");
+            backdrop.classList.toggle("show");
+          } else {
+            // En desktop actúa como collapse toggle
+            wrapper.classList.toggle("sidebar-collapsed");
+            const collapsed = wrapper.classList.contains("sidebar-collapsed");
+            localStorage.setItem("molino_sidebar_collapsed", collapsed);
+            if (collapseIcon) {
+              if (collapsed) {
+                collapseIcon.classList.replace("bi-chevron-left", "bi-chevron-right");
+              } else {
+                collapseIcon.classList.replace("bi-chevron-right", "bi-chevron-left");
+              }
+            }
+          }
+        });
+      }
+
+      // Botón de colapso en cabecera de sidebar (desktop)
+      if (btnCollapse) {
+        btnCollapse.addEventListener("click", function() {
+          wrapper.classList.toggle("sidebar-collapsed");
+          const collapsed = wrapper.classList.contains("sidebar-collapsed");
+          localStorage.setItem("molino_sidebar_collapsed", collapsed);
+          if (collapsed) {
+            collapseIcon.classList.replace("bi-chevron-left", "bi-chevron-right");
+          } else {
+            collapseIcon.classList.replace("bi-chevron-right", "bi-chevron-left");
+          }
+        });
+      }
+
+      // Cierre al pulsar el backdrop en móvil
+      if (backdrop) {
+        backdrop.addEventListener("click", function() {
+          sidebar.classList.remove("sidebar-open");
+          backdrop.classList.remove("show");
+        });
+      }
+
+      // Toggle de Tema (Dark / Light)
+      const currentTheme = localStorage.getItem("molino_admin_theme") || "dark";
+      applyTheme(currentTheme);
+
+      if (btnTheme) {
+        btnTheme.addEventListener("click", function() {
+          const activeTheme = document.documentElement.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
+          applyTheme(activeTheme);
+          localStorage.setItem("molino_admin_theme", activeTheme);
+        });
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-bs-theme", theme);
+        if (themeIcon) {
+          if (theme === "dark") {
+            themeIcon.className = "bi bi-sun-fill text-warning";
+            document.body.classList.add("admin-dark-theme");
+            document.body.classList.remove("admin-light-theme");
+          } else {
+            themeIcon.className = "bi bi-moon-stars-fill text-primary";
+            document.body.classList.remove("admin-dark-theme");
+            document.body.classList.add("admin-light-theme");
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

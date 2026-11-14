@@ -1,0 +1,1391 @@
+/* 
+  Estilos corporativos para el Sistema de Gestión de Mantenimiento y Auditoría Energética
+  Molino La Corona — Tingo María, Perú
+  Tesista: Nilser Lemuel Aguilar Silva | FIME - UNAS
+  Parque de 130 Motores Eléctricos — Facturación Eléctrica ~S/. 70,000 mensuales
+*/
+
+:root {
+  --corona-primary: #123447;          /* Azul industrial marino */
+  --corona-primary-dark: #0A1F2C;
+  --corona-primary-light: #1E4E68;
+  --corona-accent: #059669;           /* Verde esmeralda de eficiencia */
+  --corona-gold: #D97706;             /* Dorado grano de arroz / trigo */
+  --corona-gold-light: #F59E0B;
+  --corona-bg-soft: #F8FAFC;
+  --corona-card-border: #E2E8F0;
+  --corona-text-dark: #1E293B;
+
+  /* Semáforo de 3 Colores de Urgencia */
+  --urgencia-alta-bg: #FEE2E2;
+  --urgencia-alta-text: #991B1B;
+  --urgencia-alta-border: #F87171;
+  --urgencia-alta-accent: #DC2626;
+
+  --urgencia-media-bg: #FEF3C7;
+  --urgencia-media-text: #92400E;
+  --urgencia-media-border: #FBBF24;
+  --urgencia-media-accent: #D97706;
+
+  --urgencia-baja-bg: #D1FAE5;
+  --urgencia-baja-text: #065F46;
+  --urgencia-baja-border: #34D399;
+  --urgencia-baja-accent: #059669;
+}
+
+body {
+  background-color: #F1F5F9;
+  color: var(--corona-text-dark);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barra de navegación */
+.navbar-coop, .navbar-corona {
+  background: linear-gradient(135deg, var(--corona-primary-dark) 0%, var(--corona-primary) 100%);
+  box-shadow: 0 3px 12px rgba(10, 31, 44, 0.25);
+  border-bottom: 2px solid var(--corona-gold);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.nav-link {
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-link:hover {
+  color: #FDE68A !important;
+}
+
+.badge-rol {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Tarjetas KPI */
+.card-kpi {
+  border: 1px solid var(--corona-card-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #FFFFFF;
+  overflow: hidden;
+}
+
+.card-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-kpi .kpi-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--corona-primary);
+  line-height: 1.2;
+}
+
+.card-kpi .kpi-label {
+  font-size: 0.8rem;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   SEMÁFORO DE 3 COLORES SEGÚN URGENCIA DE MANTENIMIENTO
+   -------------------------------------------------------------------------- */
+
+/* Tarjetas destacadas del Semáforo */
+.card-semaforo {
+  border-radius: 12px;
+  padding: 1.1rem;
+  transition: all 0.2s ease;
+  border-width: 1px 1px 1px 5px;
+  border-style: solid;
+}
+
+.card-semaforo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.card-semaforo-alta {
+  background: linear-gradient(135deg, #FFF5F5 0%, #FEE2E2 100%);
+  border-color: #FECACA #FECACA #FECACA var(--urgencia-alta-accent);
+}
+
+.card-semaforo-media {
+  background: linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 100%);
+  border-color: #FDE68A #FDE68A #FDE68A var(--urgencia-media-accent);
+}
+
+.card-semaforo-baja {
+  background: linear-gradient(135deg, #F6FEF9 0%, #D1FAE5 100%);
+  border-color: #A7F3D0 #A7F3D0 #A7F3D0 var(--urgencia-baja-accent);
+}
+
+/* Badges del semáforo con los 3 colores */
+.badge-urgencia-alta {
+  background-color: var(--urgencia-alta-bg);
+  color: var(--urgencia-alta-text);
+  border: 1px solid var(--urgencia-alta-border);
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.badge-urgencia-media {
+  background-color: var(--urgencia-media-bg);
+  color: var(--urgencia-media-text);
+  border: 1px solid var(--urgencia-media-border);
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.badge-urgencia-baja {
+  background-color: var(--urgencia-baja-bg);
+  color: var(--urgencia-baja-text);
+  border: 1px solid var(--urgencia-baja-border);
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Indicador de punto de semáforo */
+.dot-semaforo {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-alta {
+  background-color: var(--urgencia-alta-accent);
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.6);
+  animation: pulse-red 2s infinite;
+}
+
+.dot-media {
+  background-color: var(--urgencia-media-accent);
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.5);
+}
+
+.dot-baja {
+  background-color: var(--urgencia-baja-accent);
+  box-shadow: 0 0 5px rgba(5, 150, 105, 0.5);
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+/* Badges de potencia en HP */
+.badge-hp-80 {
+  background-color: #4C1D95;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+}
+
+.badge-hp-grande {
+  background-color: #1E3A8A;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+}
+
+.badge-hp-mediano {
+  background-color: #0369A1;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+}
+
+.badge-hp-pequeno {
+  background-color: #475569;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* Badges de área del molino */
+.badge-area-blanqueo {
+  background-color: #EDE9FE;
+  color: #5B21B6;
+  border: 1px solid #DDD6FE;
+  font-weight: 600;
+}
+
+.badge-area-descascarado {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  font-weight: 600;
+}
+
+.badge-area-secado {
+  background-color: #FFEDD5;
+  color: #9A3412;
+  border: 1px solid #FED7AA;
+  font-weight: 600;
+}
+
+.badge-area-prelimpieza {
+  background-color: #E0E7FF;
+  color: #3730A3;
+  border: 1px solid #C7D2FE;
+  font-weight: 600;
+}
+
+.badge-area-clasificacion {
+  background-color: #E0F2FE;
+  color: #075985;
+  border: 1px solid #BAE6FD;
+  font-weight: 600;
+}
+
+.badge-area-general {
+  background-color: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  font-weight: 600;
+}
+
+/* Tarjetas generales */
+.card-custom {
+  border: 1px solid var(--corona-card-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  background-color: #FFFFFF;
+}
+
+.card-header-custom {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--corona-card-border);
+  font-weight: 700;
+  color: var(--corona-primary);
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  padding: 0.9rem 1.25rem;
+}
+
+/* Botones con estilo propio */
+.btn-primary-coop, .btn-primary-corona {
+  background-color: var(--corona-primary);
+  border-color: var(--corona-primary);
+  color: #FFFFFF;
+}
+
+.btn-primary-coop:hover, .btn-primary-corona:hover {
+  background-color: var(--corona-primary-dark);
+  border-color: var(--corona-primary-dark);
+  color: #FFFFFF;
+}
+
+.btn-accent-coop, .btn-accent-corona {
+  background-color: var(--corona-gold);
+  border-color: var(--corona-gold);
+  color: #FFFFFF;
+}
+
+.btn-accent-coop:hover, .btn-accent-corona:hover {
+  background-color: #B45309;
+  border-color: #B45309;
+  color: #FFFFFF;
+}
+
+/* Tablas */
+.table-custom {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.table-custom thead {
+  background-color: #F1F5F9;
+  color: #334155;
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-bottom: 2px solid #CBD5E1;
+}
+
+/* Badges de estado */
+.badge-validado {
+  background-color: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+  font-weight: 600;
+}
+
+.badge-pendiente {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  font-weight: 600;
+}
+
+.badge-vencido {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+  font-weight: 600;
+}
+
+/* Pie de página */
+.footer-coop, .footer-corona {
+  margin-top: auto;
+  background-color: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  padding: 1.25rem 0;
+  font-size: 0.85rem;
+  color: #64748B;
+}
+
+.text-primary-coop, .text-primary-corona {
+  color: var(--corona-primary) !important;
+}
+
+/* --------------------------------------------------------------------------
+   ESTILOS OFICIALES PARA FORMATO FMT-MTO-01 (ORDEN DE TRABAJO EN PLANTA)
+   Molino La Corona — Modelo FIME - UNAS (Word)
+   -------------------------------------------------------------------------- */
+.formato-word-container {
+  background-color: #FFFFFF;
+  border: 2px solid #334155;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+.formato-header-box {
+  border: 2px solid #0f172a;
+  background-color: #f8fafc;
+  margin-bottom: 1.25rem;
+}
+
+.seccion-header-word {
+  background: linear-gradient(90deg, #123447 0%, #1e4e68 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #0f172a;
+}
+
+.table-formato-word {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.table-formato-word th,
+.table-formato-word td {
+  border: 1px solid #475569;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.88rem;
+  vertical-align: middle;
+}
+
+.table-formato-word th {
+  background-color: #f1f5f9;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.table-formato-word .bg-label {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+.campo-firma-box {
+  border: 1px solid #475569;
+  background-color: #ffffff;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.campo-firma-linea {
+  border-top: 1px dashed #64748b;
+  margin-top: 2.5rem;
+  padding-top: 0.35rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #1e293b;
+}
+
+.alerta-imperativa-word {
+  background-color: #fffbeb;
+  border: 1.5px solid #d97706;
+  border-radius: 4px;
+  color: #78350f;
+  font-size: 0.82rem;
+  font-style: italic;
+  padding: 0.65rem 0.95rem;
+}
+
+/* Modos de impresión exactos para A4 */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+
+  .navbar-corona,
+  .footer-corona,
+  .btn,
+  .no-print,
+  .alert-dismissible {
+    display: none !important;
+  }
+
+  .formato-word-container {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .seccion-header-word {
+    background-color: #e2e8f0 !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .table-formato-word th {
+    background-color: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .table-formato-word th,
+  .table-formato-word td {
+    border-color: #000000 !important;
+  }
+
+  .campo-firma-box {
+    border-color: #000000 !important;
+  }
+}
+
+/* ==========================================================================
+   ADMIN DASHBOARD ROCKER STYLE — MOLINO LA CORONA
+   Inspirado en la plantilla Rocker Admin (Tema Oscuro con Acentos Neón)
+   ========================================================================== */
+
+/* Colores y Variables del Admin Dashboard */
+:root {
+  --admin-bg-dark: #0b111e;
+  --admin-sidebar-dark: #0f172a;
+  --admin-card-dark: #162032;
+  --admin-card-border-dark: rgba(255, 255, 255, 0.08);
+  --admin-topbar-dark: rgba(15, 23, 42, 0.88);
+  --admin-text-main: #f1f5f9;
+  --admin-text-muted: #94a3b8;
+
+  --neon-cyan: #00e5ff;
+  --neon-blue: #38bdf8;
+  --neon-amber: #f59e0b;
+  --neon-pink: #ec4899;
+  --neon-emerald: #10b981;
+  --neon-red: #ef4444;
+
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 76px;
+  --topbar-height: 64px;
+}
+
+/* Tipografía moderna */
+.admin-layout-body {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif !important;
+  background-color: var(--admin-bg-dark) !important;
+  color: var(--admin-text-main) !important;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Envoltura general del Admin Dashboard */
+.admin-wrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+/* ==========================================================================
+   BARRA LATERAL (ADMIN SIDEBAR)
+   ========================================================================== */
+.admin-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  background-color: var(--admin-sidebar-dark);
+  border-right: 1px solid var(--admin-card-border-dark);
+  display: flex;
+  flex-direction: column;
+  z-index: 1045;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s ease;
+  overflow-x: hidden;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Cabecera de la Barra Lateral (Marca / Logo) */
+.admin-sidebar-header {
+  height: var(--topbar-height);
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--admin-card-border-dark);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar-brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+}
+
+.sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-brand-text .brand-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.sidebar-brand-text .brand-subtitle {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--neon-amber);
+  letter-spacing: 1.2px;
+}
+
+/* Botón colapsar menú en desktop */
+.btn-sidebar-collapse {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--admin-text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sidebar-collapse:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Contenedor desplazable de enlaces */
+.admin-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.85rem 0.5rem;
+}
+
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* Títulos de Categoría en el Menú */
+.menu-category-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 1.2px;
+  padding: 0.85rem 0.85rem 0.35rem 0.85rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0.25rem;
+}
+
+/* Enlace individual del Menú */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  color: #94a3b8 !important;
+  font-weight: 500;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.sidebar-link .link-icon {
+  font-size: 1.15rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+  transform: translateX(3px);
+}
+
+.sidebar-link:hover .link-icon {
+  transform: scale(1.15);
+}
+
+/* Estado Activo del Enlace */
+.sidebar-link.active {
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.18) 0%, rgba(14, 165, 233, 0.04) 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  border-left: 3px solid #0ea5e9;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.12);
+}
+
+.sidebar-link.active .link-icon {
+  color: #38bdf8 !important;
+}
+
+.sidebar-pill {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+}
+
+/* Tarjeta de usuario en el pie de la barra lateral */
+.sidebar-user-widget {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 0.5rem;
+}
+
+.user-avatar-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5e9 0%, #1e40af 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-details .user-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.user-details .user-role {
+  font-size: 0.65rem;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   ESTADO COLAPSADO (DESKTOP)
+   ========================================================================== */
+@media (min-width: 992px) {
+  .admin-wrapper.sidebar-collapsed .admin-sidebar {
+    width: var(--sidebar-collapsed-width);
+  }
+
+  .admin-wrapper.sidebar-collapsed .sidebar-brand-text,
+  .admin-wrapper.sidebar-collapsed .menu-category-title,
+  .admin-wrapper.sidebar-collapsed .link-label,
+  .admin-wrapper.sidebar-collapsed .sidebar-pill,
+  .admin-wrapper.sidebar-collapsed .user-details {
+    display: none !important;
+  }
+
+  .admin-wrapper.sidebar-collapsed .admin-sidebar-header {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .admin-wrapper.sidebar-collapsed .btn-sidebar-collapse {
+    display: none !important;
+  }
+
+  .admin-wrapper.sidebar-collapsed .sidebar-link {
+    justify-content: center;
+    padding: 0.75rem 0;
+  }
+
+  .admin-wrapper.sidebar-collapsed .sidebar-user-widget {
+    justify-content: center;
+    padding: 0.5rem 0;
+  }
+
+  .admin-wrapper.sidebar-collapsed .admin-main {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+}
+
+/* ==========================================================================
+   ESTADO MÓVIL (OFFCANVAS)
+   ========================================================================== */
+@media (max-width: 991.98px) {
+  .admin-sidebar {
+    left: calc(-1 * var(--sidebar-width));
+  }
+
+  .admin-sidebar.sidebar-open {
+    left: 0;
+  }
+
+  .admin-sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+  }
+
+  .admin-sidebar-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .admin-main {
+    margin-left: 0 !important;
+  }
+}
+
+/* ==========================================================================
+   CONTENEDOR PRINCIPAL DERECHO (ADMIN MAIN)
+   ========================================================================== */
+.admin-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;
+  background-color: var(--admin-bg-dark);
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   BARRA SUPERIOR (ADMIN TOPBAR)
+   ========================================================================== */
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  height: var(--topbar-height);
+  background: var(--admin-topbar-dark);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--admin-card-border-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  z-index: 1030;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Botón de acción genérico en la barra superior */
+.btn-topbar-action {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--admin-text-main);
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-topbar-action:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Barra de Búsqueda estilo Rocker */
+.topbar-search-form {
+  margin: 0;
+}
+
+.search-box-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-box-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--admin-text-muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.search-box-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #ffffff !important;
+  font-size: 0.85rem;
+  border-radius: 20px;
+  padding: 0.45rem 1rem 0.45rem 2.2rem;
+  width: 250px;
+  transition: all 0.2s ease;
+}
+
+.search-box-input:focus {
+  outline: none;
+  width: 320px;
+  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
+.search-box-input::placeholder {
+  color: #64748b;
+}
+
+/* Lado derecho del Topbar */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+/* Píldora de estado de Planta en vivo */
+.topbar-pill-badge {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+.pulse-indicator-emerald {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--neon-emerald);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+  margin-right: 0.45rem;
+  animation: pulse-emerald 2s infinite;
+}
+
+@keyframes pulse-emerald {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.topbar-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  border: 2px solid var(--admin-sidebar-dark);
+}
+
+.topbar-divider {
+  width: 1px;
+  height: 28px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0 0.35rem;
+}
+
+/* Botón de Perfil de Usuario */
+.topbar-user-btn {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.topbar-user-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.topbar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-user-info .user-title {
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.topbar-user-info .user-sub {
+  font-size: 0.72rem;
+}
+
+/* Menús desplegables Oscuros */
+.admin-dropdown-menu {
+  background-color: #162032 !important;
+  border: 1px solid var(--admin-card-border-dark) !important;
+  border-radius: 10px !important;
+  padding: 0.5rem !important;
+}
+
+.admin-dropdown-item {
+  color: #cbd5e1 !important;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.admin-dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   ÁREA DE CONTENIDO (ADMIN CONTENT AREA)
+   ========================================================================== */
+.admin-content-area {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+/* ==========================================================================
+   TARJETAS ADMIN (ESTILO ROCKER DARK SURFACES)
+   ========================================================================== */
+.admin-card {
+  background-color: var(--admin-card-dark) !important;
+  border: 1px solid var(--admin-card-border-dark) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-card:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+.admin-card-header {
+  border-bottom: 1px solid var(--admin-card-border-dark) !important;
+}
+
+/* Indicadores de leyenda */
+.legend-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   REJILLA DE MINI TARJETAS MÉTRICAS CON SPARKLINES (COMO EN LA IMAGEN)
+   ========================================================================== */
+.admin-mini-card {
+  background: var(--admin-card-dark);
+  border: 1px solid var(--admin-card-border-dark);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.admin-mini-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.mini-card-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.mini-card-value {
+  font-size: 1.45rem;
+  line-height: 1.2;
+}
+
+.mini-card-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* Fila de mini barras sparkline */
+.sparkline-bar-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 22px;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.spark-bar {
+  flex: 1;
+  background: var(--neon-cyan);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.75;
+  transition: height 0.3s ease, opacity 0.2s ease;
+}
+
+.spark-bar:hover {
+  opacity: 1;
+}
+
+.bar-danger {
+  background: var(--neon-red) !important;
+}
+
+.bar-warning {
+  background: var(--neon-amber) !important;
+}
+
+.bar-emerald {
+  background: var(--neon-emerald) !important;
+}
+
+.bar-info {
+  background: var(--neon-blue) !important;
+}
+
+/* ==========================================================================
+   DONUT CHART CONTAINER CON TEXTO CENTRAL
+   ========================================================================== */
+.donut-chart-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.donut-center-number {
+  font-size: 1.85rem;
+  font-weight: 800;
+  display: block;
+  line-height: 1;
+}
+
+.donut-center-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ==========================================================================
+   CAJAS DEL SEMÁFORO EN ADMIN DASHBOARD
+   ========================================================================== */
+.admin-semaforo-box {
+  border-width: 1px 1px 1px 4px;
+  border-style: solid;
+  transition: transform 0.2s ease;
+}
+
+.admin-semaforo-box:hover {
+  transform: translateY(-2px);
+}
+
+.semaforo-box-alta {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25) rgba(239, 68, 68, 0.25) rgba(239, 68, 68, 0.25) var(--neon-red);
+}
+
+.semaforo-box-media {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25) rgba(245, 158, 11, 0.25) rgba(245, 158, 11, 0.25) var(--neon-amber);
+}
+
+.semaforo-box-baja {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25) rgba(16, 185, 129, 0.25) rgba(16, 185, 129, 0.25) var(--neon-emerald);
+}
+
+/* ==========================================================================
+   TABLAS ESTILO ADMIN DARK
+   ========================================================================== */
+.admin-table {
+  color: var(--admin-text-main) !important;
+  background-color: transparent !important;
+}
+
+.admin-table thead th {
+  background-color: rgba(0, 0, 0, 0.25) !important;
+  color: #94a3b8 !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--admin-card-border-dark) !important;
+  padding: 0.85rem 1rem;
+}
+
+.admin-table tbody td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  background-color: transparent !important;
+}
+
+.admin-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ==========================================================================
+   BOTONES CON DEGRADADOS BRILLANTES
+   ========================================================================== */
+.btn-gradient-cyan {
+  background: linear-gradient(135deg, #00e5ff 0%, #0ea5e9 100%) !important;
+  color: #0b111e !important;
+  font-weight: 700;
+  border: none !important;
+  transition: all 0.2s ease;
+}
+
+.btn-gradient-cyan:hover {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 229, 255, 0.35);
+}
+
+.btn-gradient-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #0b111e !important;
+  font-weight: 700;
+  border: none !important;
+  transition: all 0.2s ease;
+}
+
+.btn-gradient-warning:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+/* Colores de texto útiles */
+.text-cyan { color: var(--neon-cyan) !important; }
+.text-pink { color: var(--neon-pink) !important; }
+.text-emerald { color: var(--neon-emerald) !important; }
+.text-amber { color: var(--neon-amber) !important; }
+.text-blue { color: var(--neon-blue) !important; }
+.bg-cyan { background-color: var(--neon-cyan) !important; }
+.bg-cyan-subtle { background-color: rgba(0, 229, 255, 0.15) !important; }
+
+/* Pie de página del Admin */
+.admin-footer {
+  background-color: var(--admin-sidebar-dark);
+  border-top: 1px solid var(--admin-card-border-dark);
+  margin-top: auto;
+}
+
+/* Compatibilidad de tema oscuro para vistas secundarias dentro de admin-content-area */
+.admin-dark-theme .card-custom {
+  background-color: var(--admin-card-dark) !important;
+  border-color: var(--admin-card-border-dark) !important;
+  color: var(--admin-text-main) !important;
+}
+
+.admin-dark-theme .card-header-custom {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-color: var(--admin-card-border-dark) !important;
+  color: var(--admin-text-main) !important;
+}
+
+.admin-dark-theme .table-custom {
+  color: var(--admin-text-main) !important;
+}
+
+.admin-dark-theme .table-custom thead {
+  background-color: rgba(0, 0, 0, 0.25) !important;
+  color: #94a3b8 !important;
+  border-color: var(--admin-card-border-dark) !important;
+}
+
+.admin-dark-theme .table-custom td {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  color: var(--admin-text-main) !important;
+}
+
+.admin-dark-theme .table-custom tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.admin-dark-theme .form-control,
+.admin-dark-theme .form-select {
+  background-color: #121826 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+.admin-dark-theme .form-control:focus,
+.admin-dark-theme .form-select:focus {
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2) !important;
+}
+
+.admin-dark-theme .input-group-text {
+  background-color: rgba(0, 0, 0, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #94a3b8 !important;
+}
+
+.admin-dark-theme .text-primary-corona,
+.admin-dark-theme .text-primary-coop {
+  color: var(--neon-cyan) !important;
+}
+
+.admin-dark-theme .bg-light {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #f1f5f9 !important;
+}
+
+.admin-dark-theme .text-dark {
+  color: #f1f5f9 !important;
+}
+
+.admin-dark-theme .bg-white {
+  background-color: var(--admin-card-dark) !important;
+  color: #f1f5f9 !important;
+}
+
+.admin-dark-theme .border {
+  border-color: var(--admin-card-border-dark) !important;
+}
+

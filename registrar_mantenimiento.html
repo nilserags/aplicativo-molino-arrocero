@@ -1,0 +1,738 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="container-fluid px-0">
+  <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <div>
+      <h4 class="mb-1 text-primary-corona fw-bold">
+        <i class="bi bi-file-earmark-text-fill text-warning me-2"></i>Orden de Trabajo — FMT-MTO-01 Versión 02
+      </h4>
+      <p class="text-muted small mb-0">
+        Molino La Corona — Formato oficial de mantenimiento para el parque de 130 motores eléctricos industriales
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('tecnico.historial') }}" class="btn btn-outline-secondary btn-sm shadow-sm">
+        <i class="bi bi-clock-history me-1"></i>Mi Historial de OT
+      </a>
+    </div>
+  </div>
+
+  <form method="POST" id="formMantenimiento">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="formato-word-container">
+      
+      <!-- ENCABEZADO OFICIAL FMT-MTO-01 -->
+      <div class="formato-header-box p-3 rounded">
+        <div class="row align-items-center gy-2">
+          <div class="col-md-7 border-end-md">
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-gear-wide-connected fs-1 text-warning"></i>
+              <div>
+                <h5 class="fw-bold mb-0 text-dark">FORMATO DE MANTENIMIENTO DE EQUIPOS Y/O MOTORES</h5>
+                <div class="text-secondary fw-semibold small">Molino arrocero – Registro de mantenimiento</div>
+                <div class="badge bg-dark mt-1">Molino La Corona — Planta Agroindustrial</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5 text-md-end ps-md-4">
+            <div class="d-flex flex-column align-items-md-end">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <label class="fw-bold small text-nowrap mb-0">N.º DE ORDEN DE TRABAJO (OT):</label>
+                <input type="text" name="numero_ot" value="{{ ot_sugerida }}" class="form-control form-control-sm font-monospace fw-bold text-danger text-center shadow-none" style="max-width: 170px;" required>
+              </div>
+              <div class="small text-muted font-monospace">
+                <strong>Código:</strong> FMT-MTO-01 &nbsp;|&nbsp; <strong>Versión:</strong> 02
+              </div>
+              <input type="hidden" name="codigo_formato" value="FMT-MTO-01 | Versión 02">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 1: DATOS GENERALES -->
+      <div class="seccion-header-word mb-2">1. DATOS GENERALES</div>
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word">
+          <tbody>
+            <tr>
+              <td class="bg-label" style="width: 15%;"><strong>FECHA DE INICIO</strong></td>
+              <td style="width: 18%;">
+                <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ hoy }}" class="form-control form-control-sm" required>
+              </td>
+              <td class="bg-label" style="width: 15%;"><strong>HORA DE INICIO</strong></td>
+              <td style="width: 18%;">
+                <input type="time" name="hora_inicio" value="08:00" class="form-control form-control-sm" required>
+              </td>
+              <td class="bg-label" style="width: 16%;"><strong>FECHA CONCLUSIÓN</strong></td>
+              <td style="width: 18%;">
+                <input type="date" name="fecha_fin" id="fecha_fin" value="{{ hoy }}" class="form-control form-control-sm" required>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label"><strong>HORA DE FIN</strong></td>
+              <td>
+                <input type="time" name="hora_fin" value="12:00" class="form-control form-control-sm" required>
+              </td>
+              <td class="bg-label"><strong>TIEMPO DE PARADA (h)</strong></td>
+              <td>
+                <input type="number" step="0.1" name="tiempo_parada_horas" value="1.5" min="0" class="form-control form-control-sm" required>
+              </td>
+              <td class="bg-label"><strong>SOLICITADO POR / ÁREA</strong></td>
+              <td>
+                <input type="text" name="solicitado_por" id="solicitado_por" value="Línea de Blanqueo" class="form-control form-control-sm" placeholder="Ej: Área de Blanqueo" required>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label"><strong>NOMBRE DEL RESPONSABLE</strong></td>
+              <td colspan="2">
+                <input type="text" name="responsable_nombre" value="Ing. Carlos Ramírez (Jefe de Mantenimiento)" class="form-control form-control-sm" required>
+              </td>
+              <td class="bg-label"><strong>NOMBRE DEL EJECUTANTE</strong></td>
+              <td colspan="2">
+                <input type="text" name="ejecutante_nombre" value="{{ current_user.nombre_completo }}" class="form-control form-control-sm" required>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 2: DATOS DEL EQUIPO -->
+      <div class="seccion-header-word mb-2">2. DATOS DEL EQUIPO</div>
+      <div class="p-2 mb-2 bg-light border rounded">
+        <label class="form-label fw-bold small text-primary mb-1">
+          <i class="bi bi-cpu me-1"></i>Seleccionar Motor del Parque de 130 Motores (Molino La Corona):
+        </label>
+        <select name="equipo_id" id="equipoSelect" class="form-select form-select-sm font-monospace fw-semibold" required>
+          <option value="" disabled selected>-- Elija un motor para autocompletar la ficha técnica --</option>
+          {% for eq in equipos %}
+          <option value="{{ eq.id }}"
+                  data-codigo="{{ eq.codigo or ('M-' ~ eq.id) }}"
+                  data-nombre="{{ eq.nombre }}"
+                  data-area="{{ eq.area | capitalize }}"
+                  data-marca="{{ eq.marca or 'WEG' }}"
+                  data-modelo="{{ eq.modelo or 'W22' }}"
+                  data-potencia="{{ eq.potencia_display() }}"
+                  data-hp="{{ eq.potencia_hp or 50 }}"
+                  data-frecuencia="{{ eq.frecuencia_mantenimiento_dias }}"
+                  data-urgencia="{{ eq.etiqueta_urgencia() }}">
+            [{{ eq.codigo or 'M' }}] {{ eq.nombre }} — {{ eq.potencia_display() }} | Línea {{ eq.area | capitalize }} ({{ eq.etiqueta_urgencia() }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word">
+          <tbody>
+            <tr>
+              <td class="bg-label" style="width: 18%;"><strong>NOMBRE DEL EQUIPO</strong></td>
+              <td style="width: 32%;">
+                <input type="text" name="nombre_equipo_display" id="nombre_equipo" class="form-control form-control-sm bg-light fw-bold" readonly placeholder="Seleccione un motor arriba">
+              </td>
+              <td class="bg-label" style="width: 16%;"><strong>CÓDIGO / TAG</strong></td>
+              <td style="width: 14%;">
+                <input type="text" name="codigo_display" id="codigo_tag" class="form-control form-control-sm font-monospace fw-bold bg-light" readonly placeholder="TAG">
+              </td>
+              <td class="bg-label" style="width: 10%;"><strong>ÁREA</strong></td>
+              <td style="width: 10%;">
+                <input type="text" id="ubicacion_area" class="form-control form-control-sm bg-light" readonly placeholder="Área">
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label"><strong>HORÓMETRO (h)</strong></td>
+              <td>
+                <input type="number" step="0.1" name="horometro" id="horometro" value="10450.0" class="form-control form-control-sm font-monospace" required>
+              </td>
+              <td class="bg-label"><strong>MARCA / MODELO</strong></td>
+              <td>
+                <input type="text" name="marca_modelo_equipo" id="marca_modelo" class="form-control form-control-sm" placeholder="Ej: WEG W22" required>
+              </td>
+              <td class="bg-label"><strong>N.º DE SERIE</strong></td>
+              <td>
+                <input type="text" name="numero_serie_equipo" id="numero_serie" class="form-control form-control-sm font-monospace" placeholder="SN-..." required>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label"><strong>DESCRIPCIÓN DEL EQUIPO (potencia, características)</strong></td>
+              <td colspan="5">
+                <input type="text" name="descripcion_equipo" id="descripcion_equipo" class="form-control form-control-sm" placeholder="Ej: Motor eléctrico trifásico de inducción jaula de ardilla 80 HP, 440V, 60 Hz, 1780 RPM para accionamiento continuo." required>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 3: TIPO DE TRABAJO -->
+      <div class="seccion-header-word mb-2">3. TIPO DE TRABAJO</div>
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word">
+          <tbody>
+            <tr>
+              <td class="bg-label" style="width: 65%;">
+                <strong>TIPO (puede marcar más de uno)</strong>
+              </td>
+              <td class="bg-label" style="width: 35%;">
+                <strong>PRIORIDAD</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="d-flex flex-wrap gap-3 py-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="tipos_trabajo" value="Predictivo" id="tipoPred">
+                    <label class="form-check-label" for="tipoPred">☐ Predictivo</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="tipos_trabajo" value="Preventivo" id="tipoPrev" checked>
+                    <label class="form-check-label fw-bold text-primary" for="tipoPrev">☑ Preventivo</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="tipos_trabajo" value="Correctivo" id="tipoCorr">
+                    <label class="form-check-label text-danger" for="tipoCorr">☐ Correctivo</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="tipos_trabajo" value="Inspección" id="tipoInsp" checked>
+                    <label class="form-check-label" for="tipoInsp">☑ Inspección</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="tipos_trabajo" value="Reparación" id="tipoRep">
+                    <label class="form-check-label" for="tipoRep">☐ Reparación</label>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex gap-3 py-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="prioridad" value="Urgente" id="prioUrgente">
+                    <label class="form-check-label text-danger fw-semibold" for="prioUrgente">Urgente</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="prioridad" value="Normal" id="prioNormal" checked>
+                    <label class="form-check-label text-primary fw-semibold" for="prioNormal">Normal</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="prioridad" value="Programable" id="prioProg">
+                    <label class="form-check-label text-secondary" for="prioProg">Programable</label>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 4: FALLA, MOTIVO Y CAUSA RAÍZ -->
+      <div class="seccion-header-word mb-2">4. FALLA, MOTIVO Y CAUSA RAÍZ</div>
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word">
+          <tbody>
+            <tr>
+              <td class="bg-label" colspan="2"><strong>MOTIVO DEL TRABAJO</strong></td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <textarea name="motivo_trabajo" id="motivo_trabajo" rows="2" class="form-control form-control-sm" placeholder="Indique la justificación de la intervención o motivo de la orden de trabajo..." required>Mantenimiento preventivo programado según plan maestro de lubricación y control de condición en planta de arroz.</textarea>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label" style="width: 50%;"><strong>SÍNTOMA DETECTADO</strong></td>
+              <td class="bg-label" style="width: 50%;"><strong>¿CÓMO SE DETECTÓ?</strong></td>
+            </tr>
+            <tr>
+              <td>
+                <textarea name="sintoma_detectado" id="sintoma_detectado" rows="2" class="form-control form-control-sm" placeholder="Describa el síntoma visual, sonoro o de medición..." required>Zumbido leve en rodamientos lado acople y elevación moderada de temperatura en carcasa.</textarea>
+              </td>
+              <td>
+                <div class="d-flex flex-wrap gap-2 small">
+                  <div class="form-check me-2">
+                    <input class="form-check-input" type="checkbox" name="como_se_detecto" value="Ruido" id="detRuido">
+                    <label class="form-check-label" for="detRuido">Ruido</label>
+                  </div>
+                  <div class="form-check me-2">
+                    <input class="form-check-input" type="checkbox" name="como_se_detecto" value="Vibración" id="detVib">
+                    <label class="form-check-label" for="detVib">Vibración</label>
+                  </div>
+                  <div class="form-check me-2">
+                    <input class="form-check-input" type="checkbox" name="como_se_detecto" value="Temperatura" id="detTemp">
+                    <label class="form-check-label" for="detTemp">Temperatura</label>
+                  </div>
+                  <div class="form-check me-2">
+                    <input class="form-check-input" type="checkbox" name="como_se_detecto" value="Inspección" id="detInsp" checked>
+                    <label class="form-check-label fw-bold" for="detInsp">Inspección</label>
+                  </div>
+                  <div class="form-check me-2">
+                    <input class="form-check-input" type="checkbox" name="como_se_detecto" value="Operador" id="detOper">
+                    <label class="form-check-label" for="detOper">Operador</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="como_se_detecto" value="Otro" id="detOtro">
+                    <label class="form-check-label" for="detOtro">Otro</label>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label" colspan="2"><strong>CAUSA RAÍZ (marcar la que aplique)</strong></td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <div class="d-flex flex-wrap gap-3 small py-1">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Falta de lubricación" id="crFaltaLub">
+                    <label class="form-check-label" for="crFaltaLub">Falta de lubricación</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Exceso de grasa" id="crExceso">
+                    <label class="form-check-label" for="crExceso">Exceso de grasa</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Desalineamiento" id="crDesalin">
+                    <label class="form-check-label" for="crDesalin">Desalineamiento</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Sobrecarga" id="crSobrecarga">
+                    <label class="form-check-label" for="crSobrecarga">Sobrecarga</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Contaminación (polvo/humedad)" id="crContam">
+                    <label class="form-check-label" for="crContam">Contaminación (polvo/humedad)</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Desgaste normal / fin de vida útil" id="crDesgaste" checked>
+                    <label class="form-check-label fw-bold text-primary" for="crDesgaste">Desgaste normal / fin de vida útil</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Mala instalación" id="crMalaInst">
+                    <label class="form-check-label" for="crMalaInst">Mala instalación</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="causa_raiz" value="Otro" id="crOtro">
+                    <label class="form-check-label" for="crOtro">Otro</label>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label" colspan="2"><strong>¿POR QUÉ FALLÓ? (explicar la causa real, no solo el síntoma)</strong></td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <textarea name="por_que_fallo" id="por_que_fallo" rows="2" class="form-control form-control-sm" placeholder="Explicar la causa técnica real y de fondo..." required>Cumplimiento del ciclo preventivo de operación continua en campaña de pilado; degradación progresiva de la capa de lubricante en rodamientos sometidos a vibración por carga de arroz.</textarea>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 5: TRABAJO -->
+      <div class="seccion-header-word mb-2">5. TRABAJO</div>
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word">
+          <tbody>
+            <tr>
+              <td class="bg-label" style="width: 50%;"><strong>DESCRIPCIÓN DEL TRABAJO A REALIZAR</strong></td>
+              <td class="bg-label" style="width: 50%;"><strong>DESCRIPCIÓN DEL TRABAJO REALIZADO</strong></td>
+            </tr>
+            <tr>
+              <td>
+                <textarea name="trabajo_a_realizar" id="trabajo_a_realizar" rows="3" class="form-control form-control-sm" placeholder="Detalle las tareas programadas..." required>Limpieza de carcasa y aletas disipadoras, verificación de juego axial, inyección de grasa sintética Mobil Polyrex EM en graseras de rodamientos, reapriete de bornes y medición de aislamiento.</textarea>
+              </td>
+              <td>
+                <textarea name="trabajo_realizado" id="trabajo_realizado" rows="3" class="form-control form-control-sm" placeholder="Detalle lo ejecutado en campo..." required>Se ejecutó soplado de polvillo y cascarilla de carcasa, se inyectaron 120 g de grasa Mobil Polyrex EM en rodamientos, reapriete con torquímetro en caja de conexiones a 25 Nm y verificación de corriente por fase.</textarea>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 6: MEDICIONES ANTES Y DESPUÉS -->
+      <div class="seccion-header-word mb-2">6. MEDICIONES ANTES Y DESPUÉS</div>
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word text-center">
+          <thead>
+            <tr>
+              <th style="width: 30%;">PARÁMETRO</th>
+              <th style="width: 20%;">UNIDAD</th>
+              <th style="width: 25%;">ANTES DEL TRABAJO</th>
+              <th style="width: 25%;">DESPUÉS DEL TRABAJO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-start bg-label"><strong>Vibración</strong></td>
+              <td><code>mm/s</code></td>
+              <td>
+                <input type="number" step="0.01" name="vibracion_antes" value="3.40" class="form-control form-control-sm text-center">
+              </td>
+              <td>
+                <input type="number" step="0.01" name="vibracion_despues" value="1.35" class="form-control form-control-sm text-center fw-bold text-success">
+              </td>
+            </tr>
+            <tr>
+              <td class="text-start bg-label"><strong>Temperatura</strong></td>
+              <td><code>°C</code></td>
+              <td>
+                <input type="number" step="0.1" name="temperatura_antes" value="65.0" class="form-control form-control-sm text-center">
+              </td>
+              <td>
+                <input type="number" step="0.1" name="temperatura_despues" value="44.8" class="form-control form-control-sm text-center fw-bold text-success">
+              </td>
+            </tr>
+            <tr>
+              <td class="text-start bg-label"><strong>Corriente</strong></td>
+              <td><code>A</code></td>
+              <td>
+                <input type="number" step="0.1" name="corriente_antes" id="corriente_antes" value="98.0" class="form-control form-control-sm text-center">
+              </td>
+              <td>
+                <input type="number" step="0.1" name="corriente_despues" id="corriente_despues" value="91.2" class="form-control form-control-sm text-center fw-bold text-success">
+              </td>
+            </tr>
+            <tr>
+              <td class="text-start bg-label"><strong>Ruido</strong></td>
+              <td>Normal / Anormal</td>
+              <td>
+                <select name="ruido_antes" class="form-select form-select-sm text-center">
+                  <option value="Normal" selected>Normal</option>
+                  <option value="Anormal">Anormal</option>
+                </select>
+              </td>
+              <td>
+                <select name="ruido_despues" class="form-select form-select-sm text-center fw-bold text-success">
+                  <option value="Normal" selected>Normal</option>
+                  <option value="Anormal">Anormal</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-start">
+                <input type="text" name="otro_parametro_nombre" value="Resistencia Aislamiento" class="form-control form-control-sm" placeholder="Otro parámetro...">
+              </td>
+              <td>
+                <input type="text" name="otro_parametro_unidad" value="MΩ" class="form-control form-control-sm text-center" placeholder="Unidad">
+              </td>
+              <td>
+                <input type="text" name="otro_antes" value="160 MΩ" class="form-control form-control-sm text-center" placeholder="Antes">
+              </td>
+              <td>
+                <input type="text" name="otro_despues" value="280 MΩ" class="form-control form-control-sm text-center fw-bold text-success" placeholder="Después">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 7: PIEZAS, REPUESTOS Y MATERIALES UTILIZADOS -->
+      <div class="d-flex justify-content-between align-items-center seccion-header-word mb-2">
+        <span>7. PIEZAS, REPUESTOS Y MATERIALES UTILIZADOS</span>
+        <button type="button" class="btn btn-warning btn-sm py-0 px-2 fw-bold text-dark no-print" onclick="agregarFilaRepuesto()">
+          <i class="bi bi-plus-lg me-1"></i>+ Agregar Fila
+        </button>
+      </div>
+      <div class="table-responsive mb-2">
+        <table class="table-formato-word text-center" id="tablaRepuestos">
+          <thead>
+            <tr>
+              <th style="width: 8%;">CANT.</th>
+              <th style="width: 32%;">DESCRIPCIÓN</th>
+              <th style="width: 15%;">MARCA</th>
+              <th style="width: 15%;">CÓDIGO</th>
+              <th style="width: 12%;">SERIE</th>
+              <th style="width: 13%;">COSTO S/</th>
+              <th style="width: 5%;" class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody id="tbodyRepuestos">
+            <tr>
+              <td><input type="text" name="repuesto_cant[]" value="1" class="form-control form-control-sm text-center"></td>
+              <td><input type="text" name="repuesto_desc[]" value="Cartucho Grasa Polyrex EM Mobil (390g)" class="form-control form-control-sm" placeholder="Descripción repuesto/material"></td>
+              <td><input type="text" name="repuesto_marca[]" value="Mobil" class="form-control form-control-sm" placeholder="Marca"></td>
+              <td><input type="text" name="repuesto_codigo[]" value="LUB-POL-EM" class="form-control form-control-sm font-monospace" placeholder="Código"></td>
+              <td><input type="text" name="repuesto_serie[]" value="N/A" class="form-control form-control-sm font-monospace" placeholder="Serie"></td>
+              <td><input type="number" step="0.01" name="repuesto_costo[]" value="85.00" class="form-control form-control-sm text-end input-costo-repuesto" oninput="recalcularCostos()"></td>
+              <td class="no-print">
+                <button type="button" class="btn btn-outline-danger btn-sm p-1" onclick="eliminarFilaRepuesto(this)" title="Quitar fila"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="text" name="repuesto_cant[]" value="0.5" class="form-control form-control-sm text-center"></td>
+              <td><input type="text" name="repuesto_desc[]" value="Solvente dieléctrico desengrasante (gal)" class="form-control form-control-sm" placeholder="Descripción repuesto/material"></td>
+              <td><input type="text" name="repuesto_marca[]" value="CRC" class="form-control form-control-sm" placeholder="Marca"></td>
+              <td><input type="text" name="repuesto_codigo[]" value="SOLV-CRC-01" class="form-control form-control-sm font-monospace" placeholder="Código"></td>
+              <td><input type="text" name="repuesto_serie[]" value="N/A" class="form-control form-control-sm font-monospace" placeholder="Serie"></td>
+              <td><input type="number" step="0.01" name="repuesto_costo[]" value="35.00" class="form-control form-control-sm text-end input-costo-repuesto" oninput="recalcularCostos()"></td>
+              <td class="no-print">
+                <button type="button" class="btn btn-outline-danger btn-sm p-1" onclick="eliminarFilaRepuesto(this)" title="Quitar fila"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word">
+          <tbody>
+            <tr>
+              <td class="bg-label" colspan="3"><strong>LUBRICANTES Y CONSUMIBLES (tipo de grasa/aceite y cantidad)</strong></td>
+            </tr>
+            <tr>
+              <td colspan="3">
+                <textarea name="lubricantes_consumibles" rows="2" class="form-control form-control-sm" placeholder="Especifique tipo de grasa/aceite y cantidad aplicada..." required>Grasa sintética Mobil Polyrex EM (150 gramos), solvente dieléctrico electro-clean (1/2 galón), paños industriales libres de pelusa.</textarea>
+              </td>
+            </tr>
+            <tr class="text-center">
+              <td class="bg-label" style="width: 33%;"><strong>COSTO REPUESTOS S/</strong></td>
+              <td class="bg-label" style="width: 33%;"><strong>COSTO MANO DE OBRA S/</strong></td>
+              <td class="bg-label" style="width: 34%;"><strong>COSTO TOTAL S/</strong></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text font-monospace">S/</span>
+                  <input type="number" step="0.01" id="costo_repuestos" name="costo_repuestos" value="120.00" class="form-control form-control-sm text-end bg-light fw-bold" readonly>
+                </div>
+              </td>
+              <td>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text font-monospace">S/</span>
+                  <input type="number" step="0.01" id="costo_mano_obra" name="costo_mano_obra" value="100.00" class="form-control form-control-sm text-end fw-bold" oninput="recalcularCostos()" required>
+                </div>
+              </td>
+              <td>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text font-monospace bg-success text-white fw-bold">S/</span>
+                  <input type="number" step="0.01" id="costo_total" name="costo_total" value="220.00" class="form-control form-control-sm text-end fw-bold text-success bg-light fs-6" readonly>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 8: CIERRE Y SEGUIMIENTO -->
+      <div class="seccion-header-word mb-2">8. CIERRE Y SEGUIMIENTO</div>
+      <div class="table-responsive mb-3">
+        <table class="table-formato-word">
+          <tbody>
+            <tr>
+              <td class="bg-label" style="width: 28%;"><strong>PRUEBA DE FUNCIONAMIENTO</strong></td>
+              <td class="bg-label" style="width: 36%;"><strong>VALIDADO POR (nombre)</strong></td>
+              <td class="bg-label" style="width: 36%;"><strong>FECHA PRÓXIMA INTERVENCIÓN</strong></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="d-flex gap-4 py-1 justify-content-center">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="prueba_funcionamiento" value="OK" id="pfOk" checked>
+                    <label class="form-check-label fw-bold text-success" for="pfOk"><i class="bi bi-check-circle-fill me-1"></i>OK</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="prueba_funcionamiento" value="No OK" id="pfNoOk">
+                    <label class="form-check-label fw-bold text-danger" for="pfNoOk"><i class="bi bi-x-circle-fill me-1"></i>No OK</label>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <input type="text" name="validado_por" value="Ing. Carlos Ramírez (Jefe de Mantenimiento)" class="form-control form-control-sm" required>
+              </td>
+              <td>
+                <input type="date" name="fecha_proxima_intervencion" id="fecha_proxima_intervencion" class="form-control form-control-sm fw-bold text-primary" required>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label" colspan="3"><strong>RECOMENDACIÓN PARA EL PRÓXIMO MANTENIMIENTO</strong></td>
+            </tr>
+            <tr>
+              <td colspan="3">
+                <textarea name="recomendacion_proximo_mto" rows="2" class="form-control form-control-sm" placeholder="Recomendaciones operativas o predictivas..." required>Monitoreo continuo de vibración con acelerómetro portátil en la siguiente semana y medición de temperatura de bornes con pirómetro láser.</textarea>
+              </td>
+            </tr>
+            <tr>
+              <td class="bg-label" colspan="3"><strong>OBSERVACIONES / FOTOS ADJUNTAS (cantidad o referencia)</strong></td>
+            </tr>
+            <tr>
+              <td colspan="3">
+                <textarea name="observaciones_fotos" rows="2" class="form-control form-control-sm" placeholder="Detalle observaciones o adjuntos fotográficos..." required>Se registraron 3 fotografías en la bitácora técnica de planta (carcasa limpia, rodamientos relubricados y caja de bornes ajustada).</textarea>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 9: FIRMAS Y VALIDACIÓN -->
+      <div class="seccion-header-word mb-2">9. FIRMAS Y VALIDACIÓN</div>
+      <div class="row g-2 mb-3">
+        <div class="col-md-3 col-6">
+          <div class="campo-firma-box">
+            <div class="small fw-bold text-muted">EJECUTANTE</div>
+            <div class="campo-firma-linea">
+              <input type="text" name="firma_ejecutante" value="{{ current_user.nombre_completo }}" class="form-control form-control-sm text-center fw-bold border-0 bg-transparent p-0 mb-1">
+              <div class="text-muted small">Fecha: <span id="fecha_firma_ejec">{{ hoy }}</span></div>
+              <input type="hidden" name="firma_ejecutante_fecha" value="{{ hoy }}">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="campo-firma-box">
+            <div class="small fw-bold text-muted">RESPONSABLE</div>
+            <div class="campo-firma-linea">
+              <input type="text" name="firma_responsable" value="Ing. Carlos Ramírez" class="form-control form-control-sm text-center fw-bold border-0 bg-transparent p-0 mb-1">
+              <div class="text-muted small">Fecha: {{ hoy }}</div>
+              <input type="hidden" name="firma_responsable_fecha" value="{{ hoy }}">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="campo-firma-box">
+            <div class="small fw-bold text-muted">SUPERVISOR / GERENTE</div>
+            <div class="campo-firma-linea">
+              <input type="text" name="firma_supervisor" value="Ing. Supervisor de Operaciones" class="form-control form-control-sm text-center fw-bold border-0 bg-transparent p-0 mb-1">
+              <div class="text-muted small">Fecha: {{ hoy }}</div>
+              <input type="hidden" name="firma_supervisor_fecha" value="{{ hoy }}">
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="campo-firma-box">
+            <div class="small fw-bold text-muted">OFICINA</div>
+            <div class="campo-firma-linea">
+              <input type="text" name="firma_oficina" value="Oficina Técnica Molino La Corona" class="form-control form-control-sm text-center fw-bold border-0 bg-transparent p-0 mb-1">
+              <div class="text-muted small">Fecha: {{ hoy }}</div>
+              <input type="hidden" name="firma_oficina_fecha" value="{{ hoy }}">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTA INFORMATIVA OBLIGATORIA DEL FORMATO -->
+      <div class="alerta-imperativa-word mb-4">
+        <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+        <strong>Nota importante:</strong> El uso y rellenado de este formato es de carácter imperativo para todo el personal y/o trabajador externo. Se pide leer y llenar cuidadosamente todos los campos, con exactitud de lo requerido. No dejar casillas vacías: si no aplica, escribir N/A.
+      </div>
+
+      <!-- BOTONES DE ACCIÓN -->
+      <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center no-print">
+        <a href="{{ url_for('tecnico.historial') }}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Cancelar y Volver
+        </a>
+        <button type="submit" class="btn btn-primary-corona py-2 px-4 fw-bold shadow-sm fs-6">
+          <i class="bi bi-save2-fill me-2"></i>Guardar Formato de Mantenimiento (OT / FMT-MTO-01)
+        </button>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<!-- SCRIPT DE AUTOCOMPLETADO Y DINAMISMO -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const selectMotor = document.getElementById('equipoSelect');
+  const txtNombre = document.getElementById('nombre_equipo');
+  const txtCodigo = document.getElementById('codigo_tag');
+  const txtArea = document.getElementById('ubicacion_area');
+  const txtSolicitado = document.getElementById('solicitado_por');
+  const txtMarca = document.getElementById('marca_modelo');
+  const txtSerie = document.getElementById('numero_serie');
+  const txtDesc = document.getElementById('descripcion_equipo');
+  const txtCorrAnt = document.getElementById('corriente_antes');
+  const txtCorrDes = document.getElementById('corriente_despues');
+  const txtFechaProx = document.getElementById('fecha_proxima_intervencion');
+  const fechaInicio = document.getElementById('fecha_inicio');
+
+  function actualizarFichaMotor() {
+    const opt = selectMotor.options[selectMotor.selectedIndex];
+    if (!opt || !opt.value) return;
+
+    const cod = opt.getAttribute('data-codigo') || 'M-000';
+    const nom = opt.getAttribute('data-nombre') || 'Motor Industrial';
+    const area = opt.getAttribute('data-area') || 'General';
+    const mrc = opt.getAttribute('data-marca') || 'WEG';
+    const mod = opt.getAttribute('data-modelo') || 'W22';
+    const pot = opt.getAttribute('data-potencia') || '50 HP';
+    const hp = parseFloat(opt.getAttribute('data-hp') || '50');
+    const freq = parseInt(opt.getAttribute('data-frecuencia') || '90', 10);
+
+    txtNombre.value = nom;
+    txtCodigo.value = cod;
+    txtArea.value = area;
+    txtSolicitado.value = 'Línea de ' + area;
+    txtMarca.value = mrc + ' ' + mod;
+    txtSerie.value = cod + '-SN-2026';
+    txtDesc.value = 'Motor trifásico ' + nom + ' (' + pot + '), 440V, 60 Hz, régimen continuo para línea de ' + area.toLowerCase() + '.';
+
+    // Estimar corrientes en base a potencia HP
+    const corrEst = (hp * 1.25).toFixed(1);
+    const corrEstDes = (hp * 1.18).toFixed(1);
+    txtCorrAnt.value = corrEst;
+    txtCorrDes.value = corrEstDes;
+
+    // Calcular fecha sugerida de próxima intervención
+    if (fechaInicio.value) {
+      const f = new Date(fechaInicio.value + 'T00:00:00');
+      f.setDate(f.getDate() + freq);
+      txtFechaProx.value = f.toISOString().split('T')[0];
+    }
+  }
+
+  selectMotor.addEventListener('change', actualizarFichaMotor);
+  fechaInicio.addEventListener('change', actualizarFichaMotor);
+
+  // Si ya hay un motor preseleccionado o primer elemento
+  if (selectMotor.value) {
+    actualizarFichaMotor();
+  } else if (selectMotor.options.length > 1) {
+    selectMotor.selectedIndex = 1;
+    actualizarFichaMotor();
+  }
+
+  recalcularCostos();
+});
+
+function recalcularCostos() {
+  const inputsCosto = document.querySelectorAll('.input-costo-repuesto');
+  let sumaRep = 0.0;
+  inputsCosto.forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v) && v > 0) {
+      sumaRep += v;
+    }
+  });
+
+  const txtRep = document.getElementById('costo_repuestos');
+  const txtMO = document.getElementById('costo_mano_obra');
+  const txtTotal = document.getElementById('costo_total');
+
+  txtRep.value = sumaRep.toFixed(2);
+  const mo = parseFloat(txtMO.value) || 0.0;
+  txtTotal.value = (sumaRep + mo).toFixed(2);
+}
+
+function agregarFilaRepuesto() {
+  const tbody = document.getElementById('tbodyRepuestos');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="repuesto_cant[]" value="1" class="form-control form-control-sm text-center"></td>
+    <td><input type="text" name="repuesto_desc[]" class="form-control form-control-sm" placeholder="Descripción repuesto/material" required></td>
+    <td><input type="text" name="repuesto_marca[]" class="form-control form-control-sm" placeholder="Marca"></td>
+    <td><input type="text" name="repuesto_codigo[]" class="form-control form-control-sm font-monospace" placeholder="Código"></td>
+    <td><input type="text" name="repuesto_serie[]" value="N/A" class="form-control form-control-sm font-monospace" placeholder="Serie"></td>
+    <td><input type="number" step="0.01" name="repuesto_costo[]" value="0.00" class="form-control form-control-sm text-end input-costo-repuesto" oninput="recalcularCostos()"></td>
+    <td class="no-print">
+      <button type="button" class="btn btn-outline-danger btn-sm p-1" onclick="eliminarFilaRepuesto(this)" title="Quitar fila"><i class="bi bi-trash"></i></button>
+    </td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function eliminarFilaRepuesto(btn) {
+  const tbody = document.getElementById('tbodyRepuestos');
+  if (tbody.querySelectorAll('tr').length > 1) {
+    btn.closest('tr').remove();
+    recalcularCostos();
+  } else {
+    alert('Debe mantener al menos una fila en la lista de repuestos y materiales.');
+  }
+}
+</script>
+{% endblock %}

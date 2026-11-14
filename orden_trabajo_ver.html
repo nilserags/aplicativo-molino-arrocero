@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="container-fluid px-0">
+  <!-- Barra de Acciones y Navegación (no imprimible) -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 no-print gap-2">
+    <div>
+      <h4 class="mb-1 text-primary-corona fw-bold">
+        <i class="bi bi-file-earmark-check-fill text-success me-2"></i>Orden de Trabajo: {{ registro.codigo_ot() }}
+      </h4>
+      <p class="text-muted small mb-0">
+        FMT-MTO-01 Versión 02 — Hoja de Mantenimiento Electromecánico Oficial de Molino La Corona
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      {% if current_user.rol == 'encargado' %}
+      <a href="{{ url_for('encargado.dashboard') }}" class="btn btn-outline-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver al Panel
+      </a>
+      {% if not registro.validado %}
+      <a href="{{ url_for('encargado.validar', registro_id=registro.id) }}" class="btn btn-warning btn-sm fw-bold shadow-sm text-dark">
+        <i class="bi bi-pencil-square me-1"></i>Validar / Firmar OT
+      </a>
+      {% endif %}
+      {% else %}
+      <a href="{{ url_for('tecnico.historial') }}" class="btn btn-outline-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i>Mi Historial
+      </a>
+      <a href="{{ url_for('tecnico.registrar') }}" class="btn btn-outline-primary btn-sm shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i>Nueva OT
+      </a>
+      {% endif %}
+      <button onclick="window.print()" class="btn btn-primary-corona btn-sm fw-semibold shadow-sm">
+        <i class="bi bi-printer-fill me-1"></i>Imprimir / Guardar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- HOJA OFICIAL MODELO WORD (A4) -->
+  <div class="formato-word-container">
+    
+    <!-- ENCABEZADO OFICIAL -->
+    <div class="formato-header-box p-3 rounded">
+      <div class="row align-items-center gy-2">
+        <div class="col-7 border-end">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-gear-wide-connected fs-1 text-warning"></i>
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">FORMATO DE MANTENIMIENTO DE EQUIPOS Y/O MOTORES</h5>
+              <div class="text-secondary fw-semibold small">Molino arrocero – Registro de mantenimiento</div>
+              <div class="badge bg-dark mt-1">Molino La Corona — Planta Agroindustrial</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-5 text-end ps-3">
+          <div class="text-muted small">N.º DE ORDEN DE TRABAJO (OT)</div>
+          <div class="fs-5 fw-bold font-monospace text-danger">{{ registro.codigo_ot() }}</div>
+          <div class="small text-muted font-monospace mt-1">
+            <strong>Código:</strong> {{ registro.codigo_formato or 'FMT-MTO-01 | Versión 02' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 1: DATOS GENERALES -->
+    <div class="seccion-header-word mb-2">1. DATOS GENERALES</div>
+    <div class="table-responsive mb-3">
+      <table class="table-formato-word">
+        <tbody>
+          <tr>
+            <td class="bg-label" style="width: 16%;"><strong>FECHA DE INICIO</strong></td>
+            <td style="width: 17%;">{{ registro.fecha_inicio or registro.fecha or 'N/A' }}</td>
+            <td class="bg-label" style="width: 16%;"><strong>HORA DE INICIO</strong></td>
+            <td style="width: 17%;">{{ registro.hora_inicio or '08:00' }}</td>
+            <td class="bg-label" style="width: 17%;"><strong>FECHA CONCLUSIÓN</strong></td>
+            <td style="width: 17%;">{{ registro.fecha_fin or registro.fecha or 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td class="bg-label"><strong>HORA DE FIN</strong></td>
+            <td>{{ registro.hora_fin or '12:00' }}</td>
+            <td class="bg-label"><strong>TIEMPO DE PARADA (h)</strong></td>
+            <td><strong>{{ registro.tiempo_parada_horas if registro.tiempo_parada_horas is not none else 0 }} h</strong></td>
+            <td class="bg-label"><strong>SOLICITADO POR / ÁREA</strong></td>
+            <td>{{ registro.solicitado_por or ('Línea de ' ~ registro.equipo.area | capitalize if registro.equipo else 'N/A') }}</td>
+          </tr>
+          <tr>
+            <td class="bg-label"><strong>NOMBRE DEL RESPONSABLE</strong></td>
+            <td colspan="2">{{ registro.responsable_nombre or 'Ing. Carlos Ramírez (Jefe de Mantenimiento)' }}</td>
+            <td class="bg-label"><strong>NOMBRE DEL EJECUTANTE</strong></td>
+            <td colspan="2"><strong>{{ registro.ejecutante_nombre or (registro.tecnico.nombre_completo if registro.tecnico else 'N/A') }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 2: DATOS DEL EQUIPO -->
+    <div class="seccion-header-word mb-2">2. DATOS DEL EQUIPO</div>
+    <div class="table-responsive mb-3">
+      {% set eq = registro.equipo %}
+      <table class="table-formato-word">
+        <tbody>
+          <tr>
+            <td class="bg-label" style="width: 18%;"><strong>NOMBRE DEL EQUIPO</strong></td>
+            <td style="width: 32%;"><strong>{{ eq.nombre if eq else (registro.descripcion_equipo or 'N/A') }}</strong></td>
+            <td class="bg-label" style="width: 16%;"><strong>CÓDIGO / TAG</strong></td>
+            <td style="width: 14%;"><span class="badge bg-dark font-monospace">{{ eq.codigo if eq else 'M-000' }}</span></td>
+            <td class="bg-label" style="width: 10%;"><strong>ÁREA</strong></td>
+            <td style="width: 10%;"><span class="badge badge-area-{{ eq.area if eq else 'general' }}">{{ eq.area | capitalize if eq else 'General' }}</span></td>
+          </tr>
+          <tr>
+            <td class="bg-label"><strong>HORÓMETRO (h)</strong></td>
+            <td><span class="font-monospace fw-bold">{{ registro.horometro if registro.horometro is not none else 'N/A' }} h</span></td>
+            <td class="bg-label"><strong>MARCA / MODELO</strong></td>
+            <td>{{ registro.marca_modelo_equipo or (eq.marca ~ ' ' ~ eq.modelo if eq and eq.marca else 'WEG W22') }}</td>
+            <td class="bg-label"><strong>N.º DE SERIE</strong></td>
+            <td><span class="font-monospace">{{ registro.numero_serie_equipo or (eq.codigo ~ '-SN-2026' if eq else 'N/A') }}</span></td>
+          </tr>
+          <tr>
+            <td class="bg-label"><strong>DESCRIPCIÓN DEL EQUIPO (potencia, características)</strong></td>
+            <td colspan="5">
+              {{ registro.descripcion_equipo or ('Motor trifásico ' ~ eq.nombre ~ ' (' ~ eq.potencia_display() ~ '), 440V, 60Hz, régimen continuo.' if eq else 'Motor industrial') }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 3: TIPO DE TRABAJO -->
+    <div class="seccion-header-word mb-2">3. TIPO DE TRABAJO</div>
+    {% set tipos_act = registro.lista_tipos_trabajo() %}
+    <div class="table-responsive mb-3">
+      <table class="table-formato-word">
+        <tbody>
+          <tr>
+            <td class="bg-label" style="width: 65%;"><strong>TIPO (puede marcar más de uno)</strong></td>
+            <td class="bg-label" style="width: 35%;"><strong>PRIORIDAD</strong></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="d-flex flex-wrap gap-3 py-1">
+                <span>{{ '☑' if 'Predictivo' in tipos_act else '☐' }} Predictivo</span>
+                <span class="{{ 'fw-bold text-primary' if 'Preventivo' in tipos_act else '' }}">{{ '☑' if 'Preventivo' in tipos_act else '☐' }} Preventivo</span>
+                <span class="{{ 'fw-bold text-danger' if 'Correctivo' in tipos_act else '' }}">{{ '☑' if 'Correctivo' in tipos_act else '☐' }} Correctivo</span>
+                <span>{{ '☑' if 'Inspección' in tipos_act else '☐' }} Inspección</span>
+                <span>{{ '☑' if 'Reparación' in tipos_act else '☐' }} Reparación</span>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex gap-3 py-1">
+                <span class="{{ 'fw-bold text-danger' if registro.prioridad == 'Urgente' else '' }}">
+                  {{ '🔘' if registro.prioridad == 'Urgente' else '⚪' }} Urgente
+                </span>
+                <span class="{{ 'fw-bold text-primary' if (registro.prioridad == 'Normal' or not registro.prioridad) else '' }}">
+                  {{ '🔘' if (registro.prioridad == 'Normal' or not registro.prioridad) else '⚪' }} Normal
+                </span>
+                <span class="{{ 'fw-bold text-secondary' if registro.prioridad == 'Programable' else '' }}">
+                  {{ '🔘' if registro.prioridad == 'Programable' else '⚪' }} Programable
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 4: FALLA, MOTIVO Y CAUSA RAÍZ -->
+    <div class="seccion-header-word mb-2">4. FALLA, MOTIVO Y CAUSA RAÍZ</div>
+    {% set detec_act = registro.lista_como_se_detecto() %}
+    {% set causas_act = registro.lista_causa_raiz() %}
+    <div class="table-responsive mb-3">
+      <table class="table-formato-word">
+        <tbody>
+          <tr>
+            <td class="bg-label" colspan="2"><strong>MOTIVO DEL TRABAJO</strong></td>
+          </tr>
+          <tr>
+            <td colspan="2">{{ registro.motivo_trabajo or registro.hallazgo or 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td class="bg-label" style="width: 50%;"><strong>SÍNTOMA DETECTADO</strong></td>
+            <td class="bg-label" style="width: 50%;"><strong>¿CÓMO SE DETECTÓ?</strong></td>
+          </tr>
+          <tr>
+            <td>{{ registro.sintoma_detectado or registro.hallazgo or 'N/A' }}</td>
+            <td>
+              <div class="d-flex flex-wrap gap-2 small">
+                <span>{{ '☑' if 'Ruido' in detec_act else '☐' }} Ruido</span>
+                <span>{{ '☑' if 'Vibración' in detec_act else '☐' }} Vibración</span>
+                <span>{{ '☑' if 'Temperatura' in detec_act else '☐' }} Temperatura</span>
+                <span>{{ '☑' if 'Inspección' in detec_act else '☐' }} Inspección</span>
+                <span>{{ '☑' if 'Operador' in detec_act else '☐' }} Operador</span>
+                <span>{{ '☑' if 'Otro' in detec_act else '☐' }} Otro</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="bg-label" colspan="2"><strong>CAUSA RAÍZ (marcar la que aplique)</strong></td>
+          </tr>
+          <tr>
+            <td colspan="2">
+              <div class="d-flex flex-wrap gap-3 small py-1">
+                <span>{{ '☑' if 'Falta de lubricación' in causas_act else '☐' }} Falta de lubricación</span>
+                <span>{{ '☑' if 'Exceso de grasa' in causas_act else '☐' }} Exceso de grasa</span>
+                <span>{{ '☑' if 'Desalineamiento' in causas_act else '☐' }} Desalineamiento</span>
+                <span>{{ '☑' if 'Sobrecarga' in causas_act else '☐' }} Sobrecarga</span>
+                <span>{{ '☑' if 'Contaminación (polvo/humedad)' in causas_act else '☐' }} Contaminación (polvo/humedad)</span>
+                <span>{{ '☑' if 'Desgaste normal / fin de vida útil' in causas_act else '☐' }} Desgaste normal / fin de vida útil</span>
+                <span>{{ '☑' if 'Mala instalación' in causas_act else '☐' }} Mala instalación</span>
+                <span>{{ '☑' if 'Otro' in causas_act else '☐' }} Otro</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="bg-label" colspan="2"><strong>¿POR QUÉ FALLÓ? (explicar la causa real, no solo el síntoma)</strong></td>
+          </tr>
+          <tr>
+            <td colspan="2">{{ registro.por_que_fallo or 'Cumplimiento del ciclo preventivo de operación continua en campaña arrocera.' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 5: TRABAJO -->
+    <div class="seccion-header-word mb-2">5. TRABAJO</div>
+    <div class="table-responsive mb-3">
+      <table class="table-formato-word">
+        <tbody>
+          <tr>
+            <td class="bg-label" style="width: 50%;"><strong>DESCRIPCIÓN DEL TRABAJO A REALIZAR</strong></td>
+            <td class="bg-label" style="width: 50%;"><strong>DESCRIPCIÓN DEL TRABAJO REALIZADO</strong></td>
+          </tr>
+          <tr>
+            <td>{{ registro.trabajo_a_realizar or 'Inspección electromecánica, lubricación y reapriete.' }}</td>
+            <td><strong>{{ registro.trabajo_realizado or registro.hallazgo or 'N/A' }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 6: MEDICIONES ANTES Y DESPUÉS -->
+    <div class="seccion-header-word mb-2">6. MEDICIONES ANTES Y DESPUÉS</div>
+    <div class="table-responsive mb-3">
+      <table class="table-formato-word text-center">
+        <thead>
+          <tr>
+            <th style="width: 30%;">PARÁMETRO</th>
+            <th style="width: 20%;">UNIDAD</th>
+            <th style="width: 25%;">ANTES DEL TRABAJO</th>
+            <th style="width: 25%;">DESPUÉS DEL TRABAJO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-start bg-label"><strong>Vibración</strong></td>
+            <td><code>mm/s</code></td>
+            <td>{{ registro.vibracion_antes if registro.vibracion_antes is not none else 'N/A' }}</td>
+            <td class="fw-bold text-success">{{ registro.vibracion_despues if registro.vibracion_despues is not none else 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td class="text-start bg-label"><strong>Temperatura</strong></td>
+            <td><code>°C</code></td>
+            <td>{{ registro.temperatura_antes if registro.temperatura_antes is not none else 'N/A' }} °C</td>
+            <td class="fw-bold text-success">{{ registro.temperatura_despues if registro.temperatura_despues is not none else 'N/A' }} °C</td>
+          </tr>
+          <tr>
+            <td class="text-start bg-label"><strong>Corriente</strong></td>
+            <td><code>A</code></td>
+            <td>{{ registro.corriente_antes if registro.corriente_antes is not none else 'N/A' }} A</td>
+            <td class="fw-bold text-success">{{ registro.corriente_despues if registro.corriente_despues is not none else 'N/A' }} A</td>
+          </tr>
+          <tr>
+            <td class="text-start bg-label"><strong>Ruido</strong></td>
+            <td>Normal / Anormal</td>
+            <td>{{ registro.ruido_antes or 'Normal' }}</td>
+            <td class="fw-bold text-success">{{ registro.ruido_despues or 'Normal' }}</td>
+          </tr>
+          <tr>
+            <td class="text-start bg-label"><strong>{{ registro.otro_parametro_nombre or 'Resistencia Aislamiento' }}</strong></td>
+            <td><code>{{ registro.otro_parametro_unidad or 'MΩ' }}</code></td>
+            <td>{{ registro.otro_antes or '150 MΩ' }}</td>
+            <td class="fw-bold text-success">{{ registro.otro_despues or '280 MΩ' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 7: PIEZAS, REPUESTOS Y MATERIALES UTILIZADOS -->
+    <div class="seccion-header-word mb-2">7. PIEZAS, REPUESTOS Y MATERIALES UTILIZADOS</div>
+    {% set repuestos = registro.lista_repuestos() %}
+    <div class="table-responsive mb-2">
+      <table class="table-formato-word text-center">
+        <thead>
+          <tr>
+            <th style="width: 8%;">CANT.</th>
+            <th style="width: 36%;">DESCRIPCIÓN</th>
+            <th style="width: 16%;">MARCA</th>
+            <th style="width: 15%;">CÓDIGO</th>
+            <th style="width: 12%;">SERIE</th>
+            <th style="width: 13%;">COSTO S/</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in repuestos %}
+          <tr>
+            <td>{{ r.cant }}</td>
+            <td class="text-start">{{ r.descripcion }}</td>
+            <td>{{ r.marca or '—' }}</td>
+            <td><code class="text-dark">{{ r.codigo or '—' }}</code></td>
+            <td>{{ r.serie or '—' }}</td>
+            <td class="text-end font-monospace">S/ {{ "%.2f"|format(r.costo|float) if r.costo else '0.00' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td>1</td>
+            <td class="text-start">Grasa sintética Mobil Polyrex EM para rodamientos de motor</td>
+            <td>Mobil</td>
+            <td><code>LUB-POL-EM</code></td>
+            <td>N/A</td>
+            <td class="text-end font-monospace">S/ {{ "%.2f"|format(registro.costo_repuestos|float) if registro.costo_repuestos is not none else '85.00' }}</td>
+          </tr>
+          {% endfor %}
+          <!-- Rellenar filas vacías para igualar el modelo físico del formato Word -->
+          {% if repuestos|length < 4 %}
+          {% for _ in range(4 - repuestos|length) %}
+          <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-responsive mb-3">
+      <table class="table-formato-word">
+        <tbody>
+          <tr>
+            <td class="bg-label" colspan="3"><strong>LUBRICANTES Y CONSUMIBLES (tipo de grasa/aceite y cantidad)</strong></td>
+          </tr>
+          <tr>
+            <td colspan="3">{{ registro.lubricantes_consumibles or 'Grasa sintética Mobil Polyrex EM (150 g), solvente dieléctrico (1/2 gal).' }}</td>
+          </tr>
+          <tr class="text-center">
+            <td class="bg-label" style="width: 33%;"><strong>COSTO REPUESTOS S/</strong></td>
+            <td class="bg-label" style="width: 33%;"><strong>COSTO MANO DE OBRA S/</strong></td>
+            <td class="bg-label" style="width: 34%;"><strong>COSTO TOTAL S/</strong></td>
+          </tr>
+          <tr class="text-center fs-6">
+            <td class="font-monospace">S/ {{ "%.2f"|format(registro.costo_repuestos|float) if registro.costo_repuestos is not none else '0.00' }}</td>
+            <td class="font-monospace">S/ {{ "%.2f"|format(registro.costo_mano_obra|float) if registro.costo_mano_obra is not none else '0.00' }}</td>
+            <td class="font-monospace fw-bold text-success bg-light">S/ {{ "%.2f"|format(registro.costo_total|float) if registro.costo_total is not none else '0.00' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 8: CIERRE Y SEGUIMIENTO -->
+    <div class="seccion-header-word mb-2">8. CIERRE Y SEGUIMIENTO</div>
+    <div class="table-responsive mb-3">
+      <table class="table-formato-word">
+        <tbody>
+          <tr>
+            <td class="bg-label" style="width: 28%;"><strong>PRUEBA DE FUNCIONAMIENTO</strong></td>
+            <td class="bg-label" style="width: 36%;"><strong>VALIDADO POR (nombre)</strong></td>
+            <td class="bg-label" style="width: 36%;"><strong>FECHA PRÓXIMA INTERVENCIÓN</strong></td>
+          </tr>
+          <tr>
+            <td class="text-center">
+              {% if registro.prueba_funcionamiento == 'No OK' %}
+              <span class="badge bg-danger fs-6"><i class="bi bi-x-circle-fill me-1"></i>No OK</span>
+              {% else %}
+              <span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill me-1"></i>OK</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ registro.validado_por or 'Ing. Carlos Ramírez (Jefe de Mantenimiento)' }}</strong></td>
+            <td><strong class="text-primary font-monospace">{{ registro.fecha_proxima_intervencion or (eq.proxima_fecha_sugerida() if eq else 'N/A') }}</strong></td>
+          </tr>
+          <tr>
+            <td class="bg-label" colspan="3"><strong>RECOMENDACIÓN PARA EL PRÓXIMO MANTENIMIENTO</strong></td>
+          </tr>
+          <tr>
+            <td colspan="3">{{ registro.recomendacion_proximo_mto or 'Monitorear niveles de vibración y alineación en cada inicio de turno de pilado.' }}</td>
+          </tr>
+          <tr>
+            <td class="bg-label" colspan="3"><strong>OBSERVACIONES / FOTOS ADJUNTAS (cantidad o referencia)</strong></td>
+          </tr>
+          <tr>
+            <td colspan="3">{{ registro.observaciones_fotos or 'Fotografías de caja de bornes y rodamientos adjuntadas en bitácora.' }}</td>
+          </tr>
+          {% if registro.observacion_encargado %}
+          <tr>
+            <td class="bg-label" colspan="3"><strong>OBSERVACIÓN DEL ENCARGADO / SUPERVISOR (VALIDACIÓN EN SALA DE CÓMPUTO)</strong></td>
+          </tr>
+          <tr>
+            <td colspan="3" class="text-primary fw-semibold">
+              <i class="bi bi-patch-check-fill text-success me-1"></i>{{ registro.observacion_encargado }}
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN 9: FIRMAS Y VALIDACIÓN -->
+    <div class="seccion-header-word mb-2">9. FIRMAS Y VALIDACIÓN</div>
+    <div class="row g-2 mb-3">
+      <div class="col-3">
+        <div class="campo-firma-box">
+          <div class="small fw-bold text-muted">EJECUTANTE</div>
+          <div class="campo-firma-linea">
+            <div class="fw-bold">{{ registro.firma_ejecutante or (registro.tecnico.nombre_completo if registro.tecnico else 'N/A') }}</div>
+            <div class="text-muted small">Fecha: {{ registro.firma_ejecutante_fecha or registro.fecha or 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-3">
+        <div class="campo-firma-box">
+          <div class="small fw-bold text-muted">RESPONSABLE</div>
+          <div class="campo-firma-linea">
+            <div class="fw-bold">{{ registro.firma_responsable or 'Ing. Carlos Ramírez' }}</div>
+            <div class="text-muted small">Fecha: {{ registro.firma_responsable_fecha or registro.fecha or 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-3">
+        <div class="campo-firma-box">
+          <div class="small fw-bold text-muted">SUPERVISOR / GERENTE</div>
+          <div class="campo-firma-linea">
+            <div class="fw-bold">{{ registro.firma_supervisor or (registro.encargado.nombre_completo if registro.encargado else 'Supervisión de Planta') }}</div>
+            <div class="text-muted small">Fecha: {{ registro.firma_supervisor_fecha or registro.fecha or 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-3">
+        <div class="campo-firma-box">
+          <div class="small fw-bold text-muted">OFICINA</div>
+          <div class="campo-firma-linea">
+            <div class="fw-bold">{{ registro.firma_oficina or 'Oficina Técnica Molino' }}</div>
+            <div class="text-muted small">Fecha: {{ registro.firma_oficina_fecha or registro.fecha or 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTA INFORMATIVA OBLIGATORIA DEL FORMATO WORD -->
+    <div class="alerta-imperativa-word">
+      <i class="bi bi-info-circle-fill text-warning me-1"></i>
+      <strong>El uso y rellenado de este formato es de carácter imperativo para todo el personal y/o trabajador externo. Se pide leer y llenar cuidadosamente todos los campos, con exactitud de lo requerido. No dejar casillas vacías: si no aplica, escribir N/A.</strong>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
